@@ -272,6 +272,10 @@ export default defineConfig({
 		svelte(),
 	],
 	vite: {
+		// 允许 Vite 提取 MEDIA_ 前缀变量到 import.meta.env（默认仅 VITE_/PUBLIC_）。
+		// Cloudflare Pages 的 env_vars 以 process.env 注入构建进程，但 Vite 默认不转发
+		// 非白名单前缀给 import.meta.env，需在 astro.config 显式声明；同时保留 VITE_/PUBLIC_。
+		envPrefix: ["VITE_", "PUBLIC_", "MEDIA_"],
 		plugins: [
 			tailwindcss(),
 			// 纯 astro dev（v12 适配器，非 workerd）时 cloudflare:workers 不可用，垫片避免模块加载崩溃
