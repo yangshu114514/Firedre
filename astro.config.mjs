@@ -276,6 +276,17 @@ export default defineConfig({
 		// Cloudflare Pages 的 env_vars 以 process.env 注入构建进程，但 Vite 默认不转发
 		// 非白名单前缀给 import.meta.env，需在 astro.config 显式声明；同时保留 VITE_/PUBLIC_。
 		envPrefix: ["VITE_", "PUBLIC_", "MEDIA_"],
+		// 构建期直接注入媒体域：Cloudflare Pages 的 env_vars 未必能经 envPrefix 进入
+		// import.meta.env，故再用 process.env 兜底并带公开域名默认值（域名非敏感）。
+		// 代码侧 toMediaUrl / mediaMusicUrl 均以 import.meta.env.PROD 门控，dev 不受影响。
+		define: {
+			"import.meta.env.MEDIA_IMAGE_HOST": JSON.stringify(
+				process.env.MEDIA_IMAGE_HOST || "image.yangshu.cc.cd",
+			),
+			"import.meta.env.MEDIA_MUSIC_HOST": JSON.stringify(
+				process.env.MEDIA_MUSIC_HOST || "music.yangshu.cc.cd",
+			),
+		},
 		plugins: [
 			tailwindcss(),
 			// 纯 astro dev（v12 适配器，非 workerd）时 cloudflare:workers 不可用，垫片避免模块加载崩溃

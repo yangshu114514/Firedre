@@ -116,8 +116,9 @@ export function url(path: string): string {
  */
 export function toMediaUrl(path: string): string {
 	if (!path) return path;
-	const MEDIA_IMAGE_HOST = import.meta.env.MEDIA_IMAGE_HOST as string | undefined;
-	if (!MEDIA_IMAGE_HOST) return path;
+	const host = (import.meta.env.MEDIA_IMAGE_HOST as string | undefined) ?? "";
+	// 仅生产重写：dev 无票据 cookie，改写会导致图片 403
+	if (!host || !import.meta.env.PROD) return path;
 	const m = /^\/api\/covers\/(.+?)$/.exec(path);
 	if (!m) return path;
 	const rest = m[1].split("/").map(encodeURIComponent).join("/");
