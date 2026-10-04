@@ -8,6 +8,7 @@ import { getCommentConfig, getSiteConfig } from "@/config/runtime";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { toMediaUrl } from "@shared/utils/url-utils";
 
 // 运行时站点配置（后台可编辑；静态 config 为兜底）
 
@@ -37,7 +38,7 @@ type FriendsCardItem = {
 
 const items: FriendsCardItem[] = friendRows.map((friend) => ({
 	title: friend.title,
-	imgurl: friend.imgurl,
+	imgurl: toMediaUrl(friend.imgurl),
 	siteurl: friend.siteurl,
 	desc: friend.desc ?? "",
 	tags: (friend.tags || "")

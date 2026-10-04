@@ -107,3 +107,19 @@ export function url(path: string): string {
 	// 只有本地相对路径才添加BASE_URL
 	return joinUrl("", import.meta.env.BASE_URL, path);
 }
+
+/**
+ * 媒体直链重写（媒体域架构）：
+ * D1 中存储的站内媒体引用为 /api/covers/<key> 形态（R2 covers/ 前缀）。
+ * 渲染输出时重写为 image 自定义域直连 URL（浏览器同父域自动携带 media_tkt 门票，
+ * 不经 Pages 中转；R2 对象 immutable 长缓存）。非生产或未配置域名时原样返回。
+ */
+export function toMediaUrl(path: string): string {
+	if (!path) return path;
+	const MEDIA_IMAGE_HOST = import.meta.env.MEDIA_IMAGE_HOST as string | undefined;
+	if (!MEDIA_IMAGE_HOST) return path;
+	const m = /^\/api\/covers\/(.+?)$/.exec(path);
+	if (!m) return path;
+	const rest = m[1].split("/").map(encodeURIComponent).join("/");
+	return `https://${MEDIA_IMAGE_HOST}/covers/${rest}/`;
+}

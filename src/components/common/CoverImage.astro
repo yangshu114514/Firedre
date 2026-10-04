@@ -8,7 +8,7 @@ import ImageWrapper from "@/components/common/ImageWrapper.astro";
 import { getCoverConfig } from "@/config/runtime";
 import type { ImageFormat, ResponsiveImageLayout } from "@/types/config";
 import { getLqipProps } from "@/utils/lqip-utils";
-import { url } from "@/utils/url-utils";
+import { url, toMediaUrl } from "@shared/utils/url-utils";
 
 // 运行时站点配置（后台可编辑；静态 config 为兜底）
 
@@ -85,8 +85,9 @@ const remoteReferrerPolicy =
 
 // 远程 http(s) 封面走同源代理（按宽度缩放 + 边缘缓存），data:/站点相对路径保持原样
 // 项目 trailingSlash: "always"，路径带斜杠避免 301 跳转
+// toMediaUrl：/api/covers/ 引用重写为 image 媒体域直链（不经 Pages 中转）
 const remoteSrc = isPublic
-	? url(src)
+	? toMediaUrl(src) || url(src)
 	: src.startsWith("http")
 		? url(`/api/cover-proxy/?u=${encodeURIComponent(src)}&w=${widths[0]}`)
 		: src;
