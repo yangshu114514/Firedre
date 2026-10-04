@@ -16,6 +16,20 @@ export function getSiteConfig(locals: unknown): SiteConfig {
 	const p = groupOf(s, "post");
 	const pl = groupOf(s, "postListLayout");
 	const basic = groupOf(s, "basic");
+	// 页面开关（后台「页面管理」可编辑）；缺省兜底：友链开、其余关
+	const pg = groupOf(s, "pages");
+	const pages: SiteConfig["pages"] = {
+		booknav: bool(pg.booknav, false),
+		friends: bool(pg.friends, true),
+		sponsor: bool(pg.sponsor, false),
+		guestbook: bool(pg.guestbook, false),
+		bangumi: bool(pg.bangumi, false),
+		vndb: bool(pg.vndb, false),
+		mal: bool(pg.mal, false),
+		gallery: bool(pg.gallery, false),
+		bilibili: bool(pg.bilibili, false),
+		dynamic: bool(pg.dynamic, false),
+	};
 	return {
 		title: str(basic.title, ""),
 		lang: str(basic.lang, "zh_CN") as SiteConfig["lang"],
@@ -87,5 +101,6 @@ export function getSiteConfig(locals: unknown): SiteConfig {
 		bangumi: basic.bangumi as SiteConfig["bangumi"],
 		vndb: basic.vndb as SiteConfig["vndb"],
 		mal: basic.mal as SiteConfig["mal"],
+		pages,
 	};
 }
