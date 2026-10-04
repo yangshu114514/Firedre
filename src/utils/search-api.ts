@@ -37,7 +37,7 @@ export async function searchPostsApi(keyword: string): Promise<SearchResult[]> {
 		if (!resp.ok) return [];
 		const data = (await resp.json()) as { posts?: SearchApiItem[] };
 		return (data.posts || []).map((post) => ({
-			url: post.path || `/posts/${encodeURIComponent(post.slug)}/`,
+			url: post.path || `/post/${encodeURIComponent(post.slug)}/`,
 			meta: { title: highlightText(post.title, q) },
 			excerpt: highlightText(post.excerpt || post.description || "", q),
 		}));

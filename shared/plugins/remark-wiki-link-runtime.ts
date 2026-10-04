@@ -56,7 +56,7 @@ function createPostUrl(contentPath: string) {
 	const encodedPath = segments
 		.map((segment) => encodeURIComponent(segment))
 		.join("/");
-	return `/posts/${encodedPath ? `${encodedPath}/` : ""}`;
+	return `/post/${encodedPath ? `${encodedPath}/` : ""}`;
 }
 
 function createElement(

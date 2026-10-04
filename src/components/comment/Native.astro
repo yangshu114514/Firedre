@@ -1,0 +1,56 @@
+---
+// 原生评论 SSR 包装：首屏拉一页 approved 列表 + 注入当前登录态，
+// 避免首屏闪「登录/未登录」两态；客户端挂载后再自行增量刷新。
+// 带 user_session 的请求已被 middleware 排除出 HTML 缓存，注入登录态不会串页。
+import {
+	COMMENT_PAGE_SIZE,
+	listComments,
+	type CommentListResult,
+} from "@server/comments/service";
+import { getAuthUser } from "@server/auth/userSession";
+import NativeSvelte from "./Native.svelte";
+
+interface Props {
+	target: string;
+}
+
+const { target } = Astro.props as Props;
+
+const [{ cfEnv }] = await Promise.all([import("../../lib/api")]);
+
+let initial: CommentListResult = {
+	items: [],
+	total: 0,
+	page: 1,
+	pageSize: COMMENT_PAGE_SIZE,
+};
+let viewer: {
+	id: string;
+	name: string;
+	avatar: string;
+	emailVerified: boolean;
+} | null = null;
+
+try {
+	const me = await getAuthUser(Astro.request, cfEnv);
+	if (me) {
+		viewer = {
+			id: me.id,
+			name: me.name,
+			avatar: me.avatar,
+			emailVerified: me.email_verified === 1,
+		};
+	}
+	initial = await listComments(cfEnv.DB, {
+		target,
+		page: 1,
+		pageSize: COMMENT_PAGE_SIZE,
+		viewerId: me?.id ?? null,
+	});
+} catch (error) {
+	// D1 异常不阻塞页面渲染：首屏降级为空列表，由客户端重试
+	console.error("[comments] 首屏评论加载失败:", error);
+}
+---
+
+<NativeSvelte client:visible {target} {initial} {viewer} />

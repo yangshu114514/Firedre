@@ -91,11 +91,19 @@ async function pruneExpiredWindows(
 	now: number,
 	windowMs: number,
 ) {
+	// key 结构 = `[scope:]ip:windowMs:maxRequests`（见 withRateLimit），窗口时长已编码在 key 里。
+	// 只清理与本次调用【同窗口参数】的过期行：旧实现按调用方 windowMs 无差别删除全部
+	// kind='window' 行，短窗口调用（如 user-login 15min）会把长窗口（如 register 1h）的
+	// 计数行提前删掉，导致长窗口限流形同虚设（register 第 4 次注册不再 429）。
+	// 方案取舍：范围仅限本文件 → 不加列/不迁移；key 结构不变、存量数据直接兼容；
+	// 单条 SQL 无读放大，各窗口参数组由自己的调用负责清理自己。
+	// windowMs 必须以文本绑定：JS number 在部分驱动会被绑成 REAL，
+	// `'%:' || 900000.0 || ':%'` 得到 '%:900000.0:%' 与 key 中的 ':900000:' 不匹配。
 	await db
 		.prepare(
-			"DELETE FROM rate_limits WHERE kind = 'window' AND window_started_at < ?",
+			"DELETE FROM rate_limits WHERE kind = 'window' AND key LIKE '%:' || ? || ':%' AND window_started_at < ?",
 		)
-		.bind(now - windowMs)
+		.bind(String(windowMs), now - windowMs)
 		.run();
 }
 

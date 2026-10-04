@@ -11,6 +11,7 @@ import { removeFileExtension } from "@/utils/url-utils";
 import Artalk from "./Artalk.astro";
 import Disqus from "./Disqus.astro";
 import Giscus from "./Giscus.astro";
+import Native from "./Native.astro";
 import Twikoo from "./Twikoo.astro";
 import Waline from "./Waline.astro";
 
@@ -28,7 +29,7 @@ const path = customPath
 	? customPath
 	: post
 		? post.collection === "posts"
-			? `/posts/${slug}`
+			? `/post/${slug}`
 			: `/${slug}`
 		: `/${slug}`;
 const url = `${Astro.site?.href}${path}`;
@@ -39,6 +40,10 @@ let commentService: string = String(
 	commentSettings.type || commentConfig?.type || "none",
 );
 const commentEnabled = commentSettings.enabled !== false;
+
+// 原生评论（native）的 target：留言板固定 'guestbook'（伪目标，不设 FK），其余用文章/页面 slug
+const isGuestbookPath = /^\/guestbook\/?$/.test(customPath || "");
+const nativeTarget = isGuestbookPath ? "guestbook" : slug;
 ---
 
 {
@@ -70,6 +75,7 @@ const commentEnabled = commentSettings.enabled !== false;
         {commentService === "giscus" && <Giscus />}
         {commentService === "disqus" && <Disqus identifier={slug} url={url} title={customTitle || postTitle || slug} />}
         {commentService === "artalk" && <Artalk path={path} />}
+        {commentService === "native" && <Native target={nativeTarget} />}
       </div>
     </div>
   )

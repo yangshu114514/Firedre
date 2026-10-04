@@ -363,5 +363,6 @@ export class TOCManager {
 }
 
 export function isPostPage(): boolean {
-	return window.location.pathname.includes("/posts/");
+	// 文章详情页前缀为 /post/；/posts/ 是文章列表页，不应命中
+	return window.location.pathname.startsWith("/post/");
 }

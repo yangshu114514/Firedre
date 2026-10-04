@@ -1,0 +1,48 @@
+---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import PostPage from "@/components/layout/PostPage.astro";
+import { apiPostToPostForList } from "@/utils/post-types";
+
+export const prerender = false;
+
+// 文章列表页（/posts/）：全部已发布文章一次列出（17 篇量级，不做分页）。
+// 排序与服务层 SQL 一致：pin_order DESC, date DESC。
+const { listPosts } = await import("@server/posts/service");
+const { cfEnv } = await import("../../lib/api");
+
+const result = await listPosts(cfEnv, { page: 1, pageSize: 200 });
+const posts = result.posts.map(apiPostToPostForList);
+
+// PostPage 只消费 page.data；补齐常用字段便于将来接分页组件
+const page = {
+	data: posts,
+	page: 1,
+	size: 200,
+	total: result.total,
+	totalPages: 1,
+	lastPage: 1,
+	start: posts.length > 0 ? 1 : 0,
+	end: result.total,
+	url: {
+		current: "/posts/",
+		isFirst: true,
+		isLast: true,
+	},
+	currentPage: 1,
+};
+---
+
+<MainGridLayout title={i18n(I18nKey.postList)}>
+  <div class="card-base px-8 py-6 mb-4 onload-animation">
+    <div class="text-2xl font-bold text-(--primary) mb-2">
+      {i18n(I18nKey.postList)}
+    </div>
+    <p class="text-30 text-sm">
+      {result.total} {i18n(I18nKey.postsCount)}
+    </p>
+  </div>
+
+  <PostPage page={page} />
+</MainGridLayout>

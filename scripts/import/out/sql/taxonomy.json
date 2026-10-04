@@ -1,0 +1,104 @@
+[
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我决定不买的100件东西'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我决定不买的100件东西','category','默认分类'),('我决定不买的100件东西','tag','物件'),('我决定不买的100件东西','tag','独处')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我家电梯里那个人'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我家电梯里那个人','category','默认分类'),('我家电梯里那个人','tag','独处'),('我家电梯里那个人','tag','城市')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='凌晨两点的便利店，我买了一包湿巾'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('凌晨两点的便利店，我买了一包湿巾','category','默认分类'),('凌晨两点的便利店，我买了一包湿巾','tag','独处'),('凌晨两点的便利店，我买了一包湿巾','tag','深夜')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='保洁阿姨的休息日'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('保洁阿姨的休息日','category','默认分类'),('保洁阿姨的休息日','tag','城市'),('保洁阿姨的休息日','tag','家庭')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我把ChatGPT当了一个礼拜的朋友'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我把ChatGPT当了一个礼拜的朋友','category','默认分类'),('我把ChatGPT当了一个礼拜的朋友','tag','独处')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我爸的电瓶车'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我爸的电瓶车','category','默认分类'),('我爸的电瓶车','tag','家庭'),('我爸的电瓶车','tag','物件')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='便利店关东煮的汤'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('便利店关东煮的汤','category','默认分类'),('便利店关东煮的汤','tag','深夜'),('便利店关东煮的汤','tag','城市')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='凌晨四点的滴滴'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('凌晨四点的滴滴','category','默认分类'),('凌晨四点的滴滴','tag','深夜'),('凌晨四点的滴滴','tag','城市'),('凌晨四点的滴滴','tag','独处')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我妈蒸的馒头'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我妈蒸的馒头','category','默认分类'),('我妈蒸的馒头','tag','家庭'),('我妈蒸的馒头','tag','物件')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我的五块钱基金'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我的五块钱基金','category','默认分类'),('我的五块钱基金','tag','独处'),('我的五块钱基金','tag','物件')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='和邻居交换的盘子'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('和邻居交换的盘子','category','默认分类'),('和邻居交换的盘子','tag','家庭'),('和邻居交换的盘子','tag','城市')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='外卖订单备注写了一首诗'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('外卖订单备注写了一首诗','category','默认分类'),('外卖订单备注写了一首诗','tag','城市'),('外卖订单备注写了一首诗','tag','独处')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我给我的空调取了个名字'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我给我的空调取了个名字','category','默认分类'),('我给我的空调取了个名字','tag','独处'),('我给我的空调取了个名字','tag','物件')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='记录了三年的冰箱贴内容'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('记录了三年的冰箱贴内容','category','默认分类'),('记录了三年的冰箱贴内容','tag','家庭'),('记录了三年的冰箱贴内容','tag','物件')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='我把手机语言改成西班牙语之后'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('我把手机语言改成西班牙语之后','category','默认分类'),('我把手机语言改成西班牙语之后','tag','独处')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='yangshu.cc.cd和yangshu.bond的爱恨情仇'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('yangshu.cc.cd和yangshu.bond的爱恨情仇','category','默认分类')"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了'"
+ },
+ {
+  "sql": "INSERT INTO post_taxonomy (post_slug,type,value) VALUES ('在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了','category','默认分类')"
+ }
+]

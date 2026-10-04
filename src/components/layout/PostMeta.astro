@@ -61,7 +61,7 @@ const {
 	variant = "default",
 } = Astro.props;
 
-const path = customPath || (id ? `/posts/${id}` : "");
+const path = customPath || (id ? `/post/${id}` : "");
 const visibleTags =
 	typeof maxTags === "number" ? tags?.slice(0, maxTags) : tags;
 ---

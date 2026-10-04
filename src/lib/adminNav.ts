@@ -61,6 +61,24 @@ export const NAV_GROUPS: {
 				sections: ["about"],
 			},
 			{
+				label: "页面管理",
+				href: "/admin/pages/",
+				icon: "pagefiles",
+				sections: ["pages"],
+			},
+			{
+				label: "评论审核",
+				href: "/admin/comments/",
+				icon: "notice",
+				sections: ["comments"],
+			},
+			{
+				label: "用户管理",
+				href: "/admin/users/",
+				icon: "settings",
+				sections: ["users"],
+			},
+			{
 				label: "相册管理",
 				href: "/admin/gallery/",
 				icon: "gallery",
@@ -91,6 +109,9 @@ const SECTION_TITLES: Record<string, string> = {
 	notice: "公告管理",
 	dynamics: "动态管理",
 	about: "关于页",
+	pages: "页面管理",
+	comments: "评论审核",
+	users: "用户管理",
 	gallery: "相册管理",
 	"album-edit": "编辑相册",
 	settings: "站点设置",
@@ -105,6 +126,9 @@ const SECTION_GROUPS: Record<string, string> = {
 	notice: "站点模块",
 	dynamics: "站点模块",
 	about: "站点模块",
+	pages: "站点模块",
+	comments: "站点模块",
+	users: "系统",
 	gallery: "站点模块",
 	"album-edit": "站点模块",
 	settings: "系统",
@@ -123,6 +147,8 @@ const ICONS: Record<string, string> = {
 	dynamics:
 		'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
 	about: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+	pagefiles:
+		'<path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/><path d="M13 3v6h6"/><path d="M9 13h6"/><path d="M9 17h4"/>',
 	plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
 	logout:
 		'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',

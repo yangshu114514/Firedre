@@ -1,0 +1,48 @@
+---
+import "@/styles/pages/common.css";
+import Markdown from "@components/common/Markdown.astro";
+import { Icon } from "astro-icon/components";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+
+// Firedre：隐私政策为独立路由（不进文章列表），内容来自 R2 spec/privacy.md（后台「页面管理」可编辑）
+const { getSpecPage } = await import("@server/spec/service");
+const { cfEnv } = await import("../lib/api");
+
+let privacyHtml = "";
+try {
+	privacyHtml = (await getSpecPage(cfEnv, "privacy"))?.html || "";
+} catch {
+	privacyHtml = "";
+}
+
+const title = "隐私政策";
+const description = "本隐私政策说明本站如何收集、使用与保护你的个人信息。";
+---
+
+<MainGridLayout title={title} description={description}>
+  <div
+    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
+  >
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+      <div class="mb-8">
+        <div class="page-heading">
+          <div class="page-icon" aria-hidden="true">
+            <Icon name="material-symbols:shield-lock" />
+          </div>
+          <div>
+            <h2>{title}</h2>
+            <p>{description}</p>
+          </div>
+        </div>
+      </div>
+
+      <Markdown class="mt-2">
+        {privacyHtml ? (
+          <Fragment set:html={privacyHtml} />
+        ) : (
+          <p class="text-neutral-500 dark:text-neutral-400">暂无隐私政策内容，请在后台「页面管理」中填写。</p>
+        )}
+      </Markdown>
+    </div>
+  </div>
+</MainGridLayout>

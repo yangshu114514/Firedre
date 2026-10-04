@@ -92,7 +92,7 @@ export function encodePostPath(slug: string) {
 		.split("/")
 		.filter(Boolean)
 		.map((segment) => encodeURIComponent(segment));
-	return `/posts/${segments.join("/")}`;
+	return `/post/${segments.join("/")}`;
 }
 
 export function decodePostSlug(pathSegment: string) {
@@ -111,7 +111,17 @@ export function isValidPostSlug(slug: string) {
 	if (slug.includes("..") || slug.includes("\\")) return false;
 	if (slug.startsWith("/") || slug.endsWith("/") || slug.includes("//"))
 		return false;
-	return slug.split("/").every((segment) => /^[a-zA-Z0-9._-]+$/.test(segment));
+	// 放宽为支持任意 Unicode 文字（如中文标题 slug），保持既有 ascii slug 兼容。
+	// 仍禁含：%（decodePostSlug 会二次解码）、字面 /、\、控制字符（\p{C}），且每段不得首尾空白。
+	return slug
+		.split("/")
+		.every(
+			(segment) =>
+				segment.length > 0 &&
+				segment.trim() === segment &&
+				!/[%/\\]/.test(segment) &&
+				!/\p{C}/u.test(segment),
+		);
 }
 
 export function normalizeTags(

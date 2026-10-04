@@ -1,0 +1,351 @@
+{
+  "generatedAt": "2026-10-03T16:43:41.861Z",
+  "posts": [
+    {
+      "slug": "我决定不买的100件东西",
+      "title": "我决定不买的100件东西",
+      "date": "2026-06-07 00:02:00",
+      "tags": [
+        "物件",
+        "独处"
+      ],
+      "words": 1839,
+      "minutes": 9,
+      "r2_key": "posts/我决定不买的100件东西.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我决定不买的100件东西.md"
+    },
+    {
+      "slug": "我家电梯里那个人",
+      "title": "我家电梯里那个人",
+      "date": "2026-06-05 00:00:00",
+      "tags": [
+        "独处",
+        "城市"
+      ],
+      "words": 1851,
+      "minutes": 9,
+      "r2_key": "posts/我家电梯里那个人.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我家电梯里那个人.md"
+    },
+    {
+      "slug": "凌晨两点的便利店，我买了一包湿巾",
+      "title": "凌晨两点的便利店，我买了一包湿巾",
+      "date": "2026-06-01 00:00:00",
+      "tags": [
+        "独处",
+        "深夜"
+      ],
+      "words": 1967,
+      "minutes": 10,
+      "r2_key": "posts/凌晨两点的便利店，我买了一包湿巾.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\凌晨两点的便利店，我买了一包湿巾.md"
+    },
+    {
+      "slug": "保洁阿姨的休息日",
+      "title": "保洁阿姨的休息日",
+      "date": "2026-05-25 00:00:00",
+      "tags": [
+        "城市",
+        "家庭"
+      ],
+      "words": 2099,
+      "minutes": 10,
+      "r2_key": "posts/保洁阿姨的休息日.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\保洁阿姨的休息日.md"
+    },
+    {
+      "slug": "我把ChatGPT当了一个礼拜的朋友",
+      "title": "我把ChatGPT当了一个礼拜的朋友",
+      "date": "2026-05-18 00:00:00",
+      "tags": [
+        "独处"
+      ],
+      "words": 1771,
+      "minutes": 9,
+      "r2_key": "posts/我把ChatGPT当了一个礼拜的朋友.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我把ChatGPT当了一个礼拜的朋友.md"
+    },
+    {
+      "slug": "我爸的电瓶车",
+      "title": "我爸的电瓶车",
+      "date": "2026-06-08 00:03:00",
+      "tags": [
+        "家庭",
+        "物件"
+      ],
+      "words": 2083,
+      "minutes": 10,
+      "r2_key": "posts/我爸的电瓶车.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我爸的电瓶车.md"
+    },
+    {
+      "slug": "便利店关东煮的汤",
+      "title": "便利店关东煮的汤",
+      "date": "2026-06-08 00:01:00",
+      "tags": [
+        "深夜",
+        "城市"
+      ],
+      "words": 2113,
+      "minutes": 11,
+      "r2_key": "posts/便利店关东煮的汤.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\便利店关东煮的汤.md"
+    },
+    {
+      "slug": "凌晨四点的滴滴",
+      "title": "凌晨四点的滴滴",
+      "date": "2026-06-07 00:00:00",
+      "tags": [
+        "深夜",
+        "城市",
+        "独处"
+      ],
+      "words": 1837,
+      "minutes": 9,
+      "r2_key": "posts/凌晨四点的滴滴.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\凌晨四点的滴滴.md"
+    },
+    {
+      "slug": "我妈蒸的馒头",
+      "title": "我妈蒸的馒头",
+      "date": "2026-06-08 00:00:00",
+      "tags": [
+        "家庭",
+        "物件"
+      ],
+      "words": 1808,
+      "minutes": 9,
+      "r2_key": "posts/我妈蒸的馒头.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我妈蒸的馒头.md"
+    },
+    {
+      "slug": "我的五块钱基金",
+      "title": "我的五块钱基金",
+      "date": "2026-06-08 00:02:00",
+      "tags": [
+        "独处",
+        "物件"
+      ],
+      "words": 1892,
+      "minutes": 9,
+      "r2_key": "posts/我的五块钱基金.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我的五块钱基金.md"
+    },
+    {
+      "slug": "和邻居交换的盘子",
+      "title": "和邻居交换的盘子",
+      "date": "2026-06-07 00:01:00",
+      "tags": [
+        "家庭",
+        "城市"
+      ],
+      "words": 1794,
+      "minutes": 9,
+      "r2_key": "posts/和邻居交换的盘子.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\和邻居交换的盘子.md"
+    },
+    {
+      "slug": "外卖订单备注写了一首诗",
+      "title": "外卖订单备注写了一首诗",
+      "date": "2026-06-10 00:01:00",
+      "tags": [
+        "城市",
+        "独处"
+      ],
+      "words": 1925,
+      "minutes": 10,
+      "r2_key": "posts/外卖订单备注写了一首诗.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\外卖订单备注写了一首诗.md"
+    },
+    {
+      "slug": "我给我的空调取了个名字",
+      "title": "我给我的空调取了个名字",
+      "date": "2026-06-10 00:00:00",
+      "tags": [
+        "独处",
+        "物件"
+      ],
+      "words": 1778,
+      "minutes": 9,
+      "r2_key": "posts/我给我的空调取了个名字.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我给我的空调取了个名字.md"
+    },
+    {
+      "slug": "记录了三年的冰箱贴内容",
+      "title": "记录了三年的冰箱贴内容",
+      "date": "2026-06-09 00:01:00",
+      "tags": [
+        "家庭",
+        "物件"
+      ],
+      "words": 2250,
+      "minutes": 11,
+      "r2_key": "posts/记录了三年的冰箱贴内容.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\记录了三年的冰箱贴内容.md"
+    },
+    {
+      "slug": "我把手机语言改成西班牙语之后",
+      "title": "我把手机语言改成西班牙语之后",
+      "date": "2026-06-09 00:00:00",
+      "tags": [
+        "独处"
+      ],
+      "words": 1953,
+      "minutes": 10,
+      "r2_key": "posts/我把手机语言改成西班牙语之后.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我把手机语言改成西班牙语之后.md"
+    },
+    {
+      "slug": "yangshu.cc.cd和yangshu.bond的爱恨情仇",
+      "title": "yangshu.cc.cd和yangshu.bond的爱恨情仇",
+      "date": "2026-09-11 00:00:00",
+      "tags": [],
+      "words": 92,
+      "minutes": 1,
+      "r2_key": "posts/yangshu.cc.cd和yangshu.bond的爱恨情仇.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\yangshu.cc.cd和yangshu.bond的爱恨情仇.md"
+    },
+    {
+      "slug": "在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了",
+      "title": "在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了",
+      "date": "2026-08-17 00:00:00",
+      "tags": [],
+      "words": 2008,
+      "minutes": 10,
+      "r2_key": "posts/在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了.md",
+      "outFile": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了.md"
+    }
+  ],
+  "r2": [
+    {
+      "key": "posts/我决定不买的100件东西.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我决定不买的100件东西.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/我家电梯里那个人.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我家电梯里那个人.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/凌晨两点的便利店，我买了一包湿巾.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\凌晨两点的便利店，我买了一包湿巾.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/保洁阿姨的休息日.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\保洁阿姨的休息日.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/我把ChatGPT当了一个礼拜的朋友.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我把ChatGPT当了一个礼拜的朋友.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/我爸的电瓶车.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我爸的电瓶车.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/便利店关东煮的汤.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\便利店关东煮的汤.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/凌晨四点的滴滴.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\凌晨四点的滴滴.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/我妈蒸的馒头.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我妈蒸的馒头.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/我的五块钱基金.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我的五块钱基金.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/和邻居交换的盘子.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\和邻居交换的盘子.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/外卖订单备注写了一首诗.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\外卖订单备注写了一首诗.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/我给我的空调取了个名字.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我给我的空调取了个名字.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/记录了三年的冰箱贴内容.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\记录了三年的冰箱贴内容.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/我把手机语言改成西班牙语之后.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\我把手机语言改成西班牙语之后.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/yangshu.cc.cd和yangshu.bond的爱恨情仇.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\yangshu.cc.cd和yangshu.bond的爱恨情仇.md",
+      "kind": "post"
+    },
+    {
+      "key": "posts/在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了.md",
+      "file": "D:\\DSH\\firedre\\scripts\\import\\out\\posts\\在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了.md",
+      "kind": "post"
+    },
+    {
+      "key": "about/index.md",
+      "file": "D:\\DSH\\halo-migration\\firefly\\pages\\about.md",
+      "kind": "about"
+    },
+    {
+      "key": "spec/privacy.md",
+      "file": "D:\\DSH\\halo-migration\\firefly\\pages\\privacy.md",
+      "kind": "spec"
+    },
+    {
+      "key": "spec/terms.md",
+      "file": "D:\\DSH\\halo-migration\\firefly\\pages\\terms.md",
+      "kind": "spec"
+    },
+    {
+      "key": "covers/在 1GB 内存服务器上，我和 AI 熬了 27 小时，被 earlyoom 杀了 293 次后终于搞定了/OpenClaw图标.svg",
+      "file": "D:\\DSH\\halo-migration\\attachments\\upload\\OpenClaw图标.svg",
+      "kind": "cover",
+      "contentType": "image/svg+xml"
+    },
+    {
+      "key": "covers/site/avatar-yangshu.webp",
+      "file": "D:\\DSH\\halo-migration\\attachments\\upload\\头像.webp",
+      "kind": "avatar-a",
+      "contentType": "image/webp"
+    },
+    {
+      "key": "covers/friends/sure-avatar.png",
+      "file": "D:\\DSH\\halo-migration\\attachments\\upload\\bbfa5cd7-6075-46aa-b5f3-41177ca909bc.png",
+      "kind": "avatar-b",
+      "contentType": "image/png"
+    }
+  ],
+  "counts": {
+    "posts": 17,
+    "taxonomyRows": 46,
+    "ftsRows": 17,
+    "r2Objects": 23
+  },
+  "batchStatements": {
+    "posts": 17,
+    "taxonomy": 34,
+    "fts": 34,
+    "misc": 9
+  }
+}

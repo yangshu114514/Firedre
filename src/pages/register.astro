@@ -1,0 +1,22 @@
+---
+import RegisterCard from "@/components/auth/RegisterCard.svelte";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { cfEnv } from "../lib/api";
+import { getAuthUser } from "@server/auth/userSession";
+
+// 已登录用户无需注册
+const me = await getAuthUser(Astro.request, cfEnv);
+if (me) return Astro.redirect("/profile/");
+
+const turnstileSiteKey: string =
+	(import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ?? "";
+
+const title = "注册账号";
+const description = "注册 Firedre 账号，验证邮箱后参与评论与互动";
+---
+
+<MainGridLayout title={title} description={description}>
+	<div class="min-h-[70vh] flex items-start justify-center pt-4 sm:pt-10">
+		<RegisterCard client:load turnstileSiteKey={turnstileSiteKey} />
+	</div>
+</MainGridLayout>

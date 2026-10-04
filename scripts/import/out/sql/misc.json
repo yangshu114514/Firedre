@@ -1,0 +1,29 @@
+[
+ {
+  "sql": "DELETE FROM friends"
+ },
+ {
+  "sql": "INSERT INTO friends (id,title,imgurl,desc,siteurl,tags,weight,enabled,created_at,updated_at) VALUES\n (1,'Sure的小站','/api/covers/friends/sure-avatar.png','一个博客','https://sure-block.cc.cd/','',2,1,datetime('now'),datetime('now')), (2,'Sure的音乐小站','/api/covers/friends/sure-avatar.png','','https://music.sure-block.cc.cd/','',4,1,datetime('now'),datetime('now')), (3,'Sure的域名邮箱小站','/api/covers/friends/sure-avatar.png','一个使用cloudmail开源项目搭建的域名\n邮箱','https://mail.suremail.cc.cd/','',5,1,datetime('now'),datetime('now')), (4,'Sure的小说网站','/api/covers/friends/sure-avatar.png','一个开源的部署在cloudflare的小说网站','https://novel.sure-block.cc.cd/','',3,1,datetime('now'),datetime('now'))"
+ },
+ {
+  "sql": "INSERT INTO site_settings (key,value,updated_at)\nVALUES ('basic', json('{\"title\":\"杨树\",\"subtitle\":\"全网最不正经的博客\",\"faviconUrl\":\"/favicon/site-192.png\"}'), datetime('now'))\nON CONFLICT(key) DO UPDATE SET value=json_patch(value,'{\"title\":\"杨树\",\"subtitle\":\"全网最不正经的博客\",\"faviconUrl\":\"/favicon/site-192.png\"}'), updated_at=datetime('now')"
+ },
+ {
+  "sql": "INSERT INTO site_settings (key,value,updated_at)\nVALUES ('profile', json('{\"avatar\":\"/api/covers/site/avatar-yangshu.webp\"}'), datetime('now'))\nON CONFLICT(key) DO UPDATE SET value=json_patch(value,'{\"avatar\":\"/api/covers/site/avatar-yangshu.webp\"}'), updated_at=datetime('now')"
+ },
+ {
+  "sql": "INSERT INTO site_settings (key,value,updated_at)\nVALUES ('nav', json('{\"navItems\":[{\"name\":\"首页\",\"url\":\"/\",\"icon\":\"material-symbols:home\"},{\"name\":\"文章\",\"url\":\"/posts/\",\"icon\":\"material-symbols:article\"},{\"name\":\"关于\",\"url\":\"/about/\",\"icon\":\"material-symbols:info\"},{\"name\":\"友链\",\"url\":\"/friends/\",\"icon\":\"material-symbols:link-2-rounded\"},{\"name\":\"隐私政策\",\"url\":\"/privacy/\",\"icon\":\"material-symbols:shield\"},{\"name\":\"用户协议\",\"url\":\"/terms/\",\"icon\":\"material-symbols:gavel\"}]}'), datetime('now'))\nON CONFLICT(key) DO UPDATE SET value=json_patch(value,excluded.value), updated_at=datetime('now')"
+ },
+ {
+  "sql": "INSERT INTO site_settings (key,value,updated_at)\nVALUES('__firedre_settings_version','1',datetime('now'))\nON CONFLICT(key) DO UPDATE SET value=CAST(value AS INTEGER)+1, updated_at=datetime('now')"
+ },
+ {
+  "sql": "DELETE FROM posts_fts WHERE slug='firedre'"
+ },
+ {
+  "sql": "DELETE FROM post_taxonomy WHERE post_slug='firedre'"
+ },
+ {
+  "sql": "DELETE FROM posts WHERE slug='firedre'"
+ }
+]

@@ -9,3 +9,38 @@ SESSION_SECRET=your-strong-session-secret-min-32-chars
 # WebDAV 相册密码
 WEBDAV_PASSWORD=your_webdav_password
 SITE_URL=http://localhost:4321
+
+# ========== 用户系统（auth-core 新增） ==========
+# 前台用户 user_session 签名密钥（必须配置，与 SESSION_SECRET 独立，便于密钥轮换互不影响）
+# 生产：Cloudflare Secrets 生成强随机值（≥32 字符）
+USER_SESSION_SECRET=your-strong-user-session-secret-min-32-chars
+# Brevo SMTP API Key（生产必配；Halo 旧 SMTP 密码作废，需在 Brevo 控制台新生成 API Key）
+BREVO_API_KEY=xkeys-xxxxxxxxxxxxxxxx
+# 发件人："admin@yangshu.cc" 或 "杨树 <admin@yangshu.cc>"（Brevo 已验证域名）
+MAIL_FROM=admin@yangshu.cc
+# 邮件发送开关：仅 'prod' 真发；其余环境只打日志（本地开发默认不发信，日志中含验证链接可直接取用）
+ENVIRONMENT=dev
+# Turnstile 服务端密钥（Secret）；不配置 = 跳过 register/login 人机校验（仅限本地开发）
+# 本地联调可用 Cloudflare 测试密钥（always-pass）：
+#   TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+TURNSTILE_SECRET_KEY=
+# 说明：Turnstile 前端 site key 是构建期变量 VITE_TURNSTILE_SITE_KEY，
+#   放 .env / .env.local（Vite 读取，已 gitignore）或 Cloudflare Pages 构建环境变量；
+#   本地测试 site key：1x00000000000000000000AA；未配置时前端不渲染人机验证组件。
+
+# ========== OAuth 一键登录（GitHub / Google） ==========
+# GitHub OAuth App：Settings → Developer settings → OAuth Apps → New OAuth App
+#   Homepage URL:  http://localhost:4321/（生产填站点 origin）
+#   Authorization callback URL: http://localhost:4321/api/auth/oauth/github/callback/
+#     （注意尾斜杠：站点 trailingSlash:"always"；生产部署时同样带尾斜杠）
+GITHUB_CLIENT_ID=Iv1.xxxxxxxxxxxx
+GITHUB_CLIENT_SECRET=ghs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Google Cloud：APIs & Services → Credentials → OAuth client ID（Web application）
+#   Authorized redirect URIs（精确匹配，Google 最严格）:
+#     http://localhost:4321/api/auth/oauth/google/callback/
+GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxx
+# 说明：四项均需同时配置（client_id + client_secret 成对）才启用对应按钮的登录流；
+#   未配置时点击按钮会被 302 回 /login/?oauth_error=not_configured（受控提示，不会 500）。
+#   回调地址由请求 origin 动态拼出，生产环境注册的回调地址需与线上域名一致。
+

@@ -18,6 +18,7 @@ const settings =
 import Markdown from "@components/common/Markdown.astro";
 import EncryptedPost from "@components/features/EncryptedPost.astro";
 import KatexManager from "@components/features/KatexManager.astro";
+import LikeButton from "@components/like/LikeButton.svelte";
 import License from "@components/misc/License.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
@@ -217,6 +218,15 @@ const [relatedPosts, seriesData] = await Promise.all([
 	getRelatedPosts(entry, 5),
 	getSeriesPosts(entry),
 ]);
+
+// 点赞计数 SSR 首屏（是否已赞/是否登录由客户端挂载后补，避免把登录态烘进 HTML）
+let likeCount = 0;
+try {
+	const { getLikeState } = await import("@server/likes/service");
+	likeCount = (await getLikeState(cfEnv.DB, entry.id, null)).count;
+} catch (error) {
+	console.error("[likes] 点赞数读取失败:", error);
+}
 ---
 
 <MainGridLayout
@@ -598,6 +608,10 @@ const [relatedPosts, seriesData] = await Promise.all([
               />
             )
           }
+
+          <div class="mb-6 onload-animation">
+            <LikeButton slug={entry.id} initialCount={likeCount} />
+          </div>
         </>
       )}
     </div>
@@ -638,6 +652,12 @@ const [relatedPosts, seriesData] = await Promise.all([
       );
     })()
   }
+
+  <div
+    class="card-base px-6 py-4 mb-4 flex items-center justify-between flex-wrap gap-4"
+  >
+    <LikeButton client:visible slug={entry.id} initialCount={likeCount} />
+  </div>
 
   <script>
     const card = document.getElementById('outdated-card');

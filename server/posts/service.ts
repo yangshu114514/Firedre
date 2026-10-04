@@ -325,6 +325,11 @@ function escapeFtsKeyword(keyword: string): string {
 		.join(" AND ");
 }
 
+/** 转义 LIKE 通配符（配合 SQL 中的 ESCAPE '\' 使用） */
+function escapeLikeKeyword(keyword: string): string {
+	return keyword.replace(/([\\%_])/g, "\\$&");
+}
+
 export async function searchPosts(
 	env: CloudflareEnv,
 	keyword: string,
@@ -332,17 +337,33 @@ export async function searchPosts(
 ): Promise<PostListItem[]> {
 	const q = keyword.trim();
 	if (!q) return [];
-	const safeQuery = escapeFtsKeyword(q);
 
-	const { results } = await env.DB.prepare(`
+	// 双通道：posts_fts 为 FTS5 trigram 分词，MATCH 只对 ≥3 个字符的查询有命中；
+	// 不足 3 字符（双字中文词、单字、短 ASCII）走 LIKE 子串通道，覆盖同样的三列
+	const useMatch = [...q].length >= 3;
+	const likePattern = `%${escapeLikeKeyword(q)}%`;
+
+	const stmt = useMatch
+		? env.DB.prepare(`
     SELECT p.* FROM posts_fts f
     JOIN posts p ON p.slug = f.slug
     WHERE posts_fts MATCH ? AND p.published = 1
     ORDER BY rank
     LIMIT ?
-  `)
-		.bind(safeQuery, limit)
-		.all<PostRecord>();
+  `).bind(escapeFtsKeyword(q), limit)
+		: env.DB.prepare(`
+    SELECT p.* FROM posts_fts f
+    JOIN posts p ON p.slug = f.slug
+    WHERE (
+      f.title LIKE ? ESCAPE '\\' OR
+      f.excerpt LIKE ? ESCAPE '\\' OR
+      f.content LIKE ? ESCAPE '\\'
+    ) AND p.published = 1
+    ORDER BY p.pin_order DESC, p.date DESC
+    LIMIT ?
+  `).bind(likePattern, likePattern, likePattern, limit);
+
+	const { results } = await stmt.all<PostRecord>();
 
 	return sortPosts((results || []).map(recordToListItem));
 }

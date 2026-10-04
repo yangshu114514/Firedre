@@ -1,0 +1,26 @@
+---
+import LoginCard from "@/components/auth/LoginCard.svelte";
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { cfEnv } from "../lib/api";
+import { getAuthUser } from "@server/auth/userSession";
+
+// 已登录则直接落地（防重复登录页），带 next 时优先回跳
+const nextParam = Astro.url.searchParams.get("next") ?? "";
+const safeNext =
+	nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "";
+
+const me = await getAuthUser(Astro.request, cfEnv);
+if (me) return Astro.redirect(safeNext || "/profile/");
+
+const turnstileSiteKey: string =
+	(import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ?? "";
+
+const title = "登录";
+const description = "登录 Firedre，参与评论与互动";
+---
+
+<MainGridLayout title={title} description={description}>
+	<div class="min-h-[70vh] flex items-start justify-center pt-4 sm:pt-10">
+		<LoginCard client:load next={safeNext} turnstileSiteKey={turnstileSiteKey} />
+	</div>
+</MainGridLayout>

@@ -52,7 +52,7 @@ export async function GET(context: APIContext): Promise<Response> {
 		.map((post) => {
 			// 绝对 URL（原 @astrojs/rss 以 site 解析相对路径；手写实现需自行拼接）
 			const link = escapeXml(
-				new URL(url(`/posts/${post.slug}/`), siteUrl).toString(),
+				new URL(url(`/post/${post.slug}/`), siteUrl).toString(),
 			);
 			const title = escapeXml(stripInvalidXmlChars(post.title ?? ""));
 			const description = escapeXml(

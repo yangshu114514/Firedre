@@ -66,7 +66,7 @@ export const GET: APIRoute = async (context) => {
 		};
 		for (const row of results || []) {
 			const encoded = row.slug.split("/").map(encodeURIComponent).join("/");
-			urls.push(`${base}/posts/${encoded}/`);
+			urls.push(`${base}/post/${encoded}/`);
 		}
 	} catch {
 		// 数据库不可用时只输出静态页

@@ -63,12 +63,24 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const { request } = context;
 	const url = new URL(request.url);
 
+	// 用户系统缓存排除（设计 G.2）：
+	// ①请求带 user_session Cookie → 跳过 caches.default（缓存 key 不含 Cookie，命中会把登录态页面发给访客）
+	// ②/login /register /verify /profile 一律不缓存（含个人数据 / 表单状态）
+	const cookieHeader = request.headers.get("Cookie") || "";
+	const hasUserSession = /(?:^|;\s*)user_session=/.test(cookieHeader);
+	const isAuthPage =
+		["/login", "/register", "/verify", "/profile"].some(
+			(p) => url.pathname === p || url.pathname.startsWith(`${p}/`),
+		);
+
 	// HTML 页面快路径：先查缓存，命中即返回，避免 seed/settings/version 串行 D1 查询
 	const isHtmlPage =
 		request.method === "GET" &&
 		!url.pathname.startsWith("/admin") &&
 		!url.pathname.startsWith("/api") &&
-		!url.pathname.startsWith("/i18n.js");
+		!url.pathname.startsWith("/i18n.js") &&
+		!hasUserSession &&
+		!isAuthPage;
 
 	let htmlCacheKey = "";
 	let settingsVersion = "";
@@ -200,6 +212,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	applySecurityHeaders(response.headers);
 
 	if (url.pathname.startsWith("/admin") && request.method === "GET") {
+		response.headers.set("Cache-Control", "no-store");
+	}
+	// 登录态请求与认证页：显式 no-store（不入边缘缓存，也不让浏览器二次缓存）
+	if (request.method === "GET" && (hasUserSession || isAuthPage)) {
 		response.headers.set("Cache-Control", "no-store");
 	}
 	if (request.method === "GET") {

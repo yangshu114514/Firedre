@@ -58,6 +58,7 @@ export const featureGroups: Group[] = [
 				label: "评论类型",
 				type: "select",
 				options: [
+					{ label: "原生评论（站内）", value: "native" },
 					{ label: "Twikoo", value: "twikoo" },
 					{ label: "Giscus", value: "giscus" },
 					{ label: "Waline", value: "waline" },

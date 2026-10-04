@@ -71,7 +71,10 @@ const VIEWS: Record<string, () => Promise<{ default: unknown }>> = {
 	dynamics: () => import("./AdminDynamic.svelte"),
 	notice: () => import("./AdminNoticeEditor.svelte"),
 	about: () => import("./AdminContentEditor.svelte"),
+	pages: () => import("./AdminSpecPages.svelte"),
 	gallery: () => import("./AdminGalleryHub.svelte"),
+	comments: () => import("./CommentModeration.svelte"),
+	users: () => import("./UserList.svelte"),
 	"album-edit": () => import("./AdminGalleryAlbum.svelte"),
 	settings: () => import("./AdminSettings.svelte"),
 };
@@ -109,6 +112,9 @@ function parsePath(pathname: string): { section: Section; slug?: string } {
 			"dynamics",
 			"notice",
 			"about",
+			"pages",
+			"comments",
+			"users",
 			"settings",
 		].includes(first)
 	) {
