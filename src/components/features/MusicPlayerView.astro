@@ -48,6 +48,13 @@ const viewConfigStr = JSON.stringify({
 </div>
 </template>
 
+<template id="playlist-group-template">
+<div class="playlist-group-header flex items-center gap-2 px-2 h-[42px] select-none" role="presentation">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="text-(--primary) shrink-0"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    <span class="playlist-group-name text-[11px] font-bold text-neutral-500 dark:text-neutral-400 tracking-wide"></span>
+</div>
+</template>
+
 <script is:inline define:vars={{ viewConfigStr }}>
 window.__fireflyMusicViewConfig = viewConfigStr;
 </script>
@@ -125,7 +132,8 @@ window.__fireflyMusicViewConfig = viewConfigStr;
             btnDrawer: q<HTMLButtonElement>('.btn-drawer-toggle'),
             playlistDrawer: q<HTMLElement>('.playlist-drawer'),
             playlistContainer: q<HTMLElement>('.playlist-container'),
-            itemTemplate: document.getElementById('playlist-item-template') as HTMLTemplateElement
+            itemTemplate: document.getElementById('playlist-item-template') as HTMLTemplateElement,
+            groupTemplate: document.getElementById('playlist-group-template') as HTMLTemplateElement
         };
 
         // 无封面曲目的占位图（黑胶唱片样式，data URI 零依赖）
@@ -134,7 +142,7 @@ window.__fireflyMusicViewConfig = viewConfigStr;
         var _critical = [ui.btnPlay, ui.btnRepeat, ui.btnMute, ui.volContainer,
             ui.btnDrawer, ui.btnLrc, ui.lrcDrawer, ui.lrcContainer,
             ui.progressContainer, ui.btnNext, ui.btnPrev, ui.loading,
-            ui.cover, ui.title, ui.artist, ui.playlistContainer, ui.itemTemplate];
+            ui.cover, ui.title, ui.artist, ui.playlistContainer, ui.itemTemplate, ui.groupTemplate];
         if (_critical.some(function(el) { return !el; })) return;
 
         var ITEM_H = 42;
@@ -155,6 +163,9 @@ window.__fireflyMusicViewConfig = viewConfigStr;
             currentLrcIndex: number;
             vs: {
                 playlist: ViewTrack[];
+                /** 行模型：曲目行 + 组头行统一编址（组头插入使曲目 idx ≠ 渲染行号） */
+                rows: Array<{ type: 'track'; track: ViewTrack; trackIndex: number } | { type: 'group'; name: string }>;
+                trackToRow: number[];
                 currentIndex: number;
                 renderedStart: number;
                 renderedEnd: number;
@@ -168,6 +179,8 @@ window.__fireflyMusicViewConfig = viewConfigStr;
             currentLrcIndex: -1,
             vs: {
                 playlist: [],
+                rows: [],
+                trackToRow: [],
                 currentIndex: -1,
                 renderedStart: -1,
                 renderedEnd: -1,
@@ -176,6 +189,28 @@ window.__fireflyMusicViewConfig = viewConfigStr;
                 drawerOpen: false
             }
         };
+
+        /** 由平铺曲目构建行模型：每组首曲前插组头行 */
+        function buildRows(playlist: ViewTrack[]) {
+            type VsRow = { type: 'track'; track: ViewTrack; trackIndex: number } | { type: 'group'; name: string };
+            var rows: VsRow[] = [];
+            var trackToRow: number[] = [];
+            var lastGroup: string | undefined = undefined;
+            for (var i = 0; i < playlist.length; i++) {
+                var t = playlist[i];
+                var groupName = typeof t.group === 'string' ? t.group : undefined;
+                if (groupName && groupName !== lastGroup) {
+                    rows.push({ type: 'group', name: groupName });
+                    lastGroup = groupName;
+                } else if (!groupName) {
+                    lastGroup = undefined;
+                }
+                trackToRow[i] = rows.length;
+                rows.push({ type: 'track', track: t, trackIndex: i });
+            }
+            local.vs.rows = rows;
+            local.vs.trackToRow = trackToRow;
+        }
 
         function setLoading(bool: boolean) {
             if (bool) {
@@ -313,33 +348,51 @@ window.__fireflyMusicViewConfig = viewConfigStr;
             }
         }
 
-        function vsCreateItemEl(idx: number) {
+        function vsCreateItemEl(rowIndex: number) {
             var vs = local.vs;
-            var track = vs.playlist[idx];
-            var clone = ui.itemTemplate.content.cloneNode(true) as DocumentFragment;
-            // 模板保证 .playlist-item 存在；断言一次（编译期）
-            var itemEl = clone.querySelector<HTMLElement>('.playlist-item') as HTMLElement;
-            var img = clone.querySelector<HTMLImageElement>('.item-cover') as HTMLImageElement;
-            var title = clone.querySelector<HTMLElement>('.item-title') as HTMLElement;
-            var artist = clone.querySelector<HTMLElement>('.item-artist') as HTMLElement;
+            var row = vs.rows[rowIndex];
+            if (!row) return document.createElement('div');
 
-            img.src = track.pic || '';
+            if (row.type === 'group') {
+                var gClone = ui.groupTemplate.content.cloneNode(true) as DocumentFragment;
+                var gEl = gClone.querySelector<HTMLElement>('.playlist-group-header') as HTMLElement;
+                var nameEl = gEl.querySelector<HTMLElement>('.playlist-group-name') as HTMLElement;
+                if (nameEl) nameEl.innerText = row.name;
+                gEl.style.position = 'absolute';
+                gEl.style.left = '0';
+                gEl.style.right = '0';
+                gEl.style.top = (rowIndex * ITEM_H) + 'px';
+                gEl.style.height = ITEM_H + 'px';
+                gEl.dataset.index = String(rowIndex);
+                return gEl;
+            }
+
+            var track = row.type === 'track' ? row.track : ({} as ViewTrack);
+            var itemClone = ui.itemTemplate.content.cloneNode(true) as DocumentFragment;
+            // 模板保证 .playlist-item 存在；断言一次（编译期）
+            var itemEl = itemClone.querySelector<HTMLElement>('.playlist-item') as HTMLElement;
+            var img = itemClone.querySelector<HTMLImageElement>('.item-cover') as HTMLImageElement;
+            var title = itemClone.querySelector<HTMLElement>('.item-title') as HTMLElement;
+            var artist = itemClone.querySelector<HTMLElement>('.item-artist') as HTMLElement;
+
+            img.src = track.pic || FALLBACK_COVER;
             img.alt = track.name + ' - ' + track.artist;
             title.innerText = String(track.name);
             artist.innerText = String(track.artist);
 
-            itemEl.dataset.index = String(idx);
+            itemEl.dataset.index = String(rowIndex);
             itemEl.setAttribute('role', 'option');
             itemEl.setAttribute('aria-label', track.name + ' - ' + track.artist);
-            itemEl.onclick = function () { mgr.playTrackByIndex(idx); };
+            var trackIndex = row.type === 'track' ? row.trackIndex : -1;
+            itemEl.onclick = function () { if (trackIndex >= 0) mgr.playTrackByIndex(trackIndex); };
 
             itemEl.style.position = 'absolute';
             itemEl.style.left = '0';
             itemEl.style.right = '0';
-            itemEl.style.top = (idx * ITEM_H) + 'px';
+            itemEl.style.top = (rowIndex * ITEM_H) + 'px';
             itemEl.style.height = ITEM_H + 'px';
 
-            if (idx === vs.currentIndex) {
+            if (row.type === 'track' && row.trackIndex === vs.currentIndex) {
                 vsApplyActiveStyle(itemEl, true);
             }
             // 返回元素而非仅含该元素的 fragment：DOM 结果等价，且类型自洽（renderedEls 存 HTMLElement）
@@ -348,13 +401,13 @@ window.__fireflyMusicViewConfig = viewConfigStr;
 
         function vsCommitRange() {
             var vs = local.vs;
-            if (vs.playlist.length === 0 || !vs.drawerOpen) return;
+            if (vs.rows.length === 0 || !vs.drawerOpen) return;
 
             var container = ui.playlistContainer;
             var scrollTop = container.scrollTop;
             var viewHeight = container.clientHeight;
             var start = Math.max(0, Math.floor(scrollTop / ITEM_H) - OVERSCAN);
-            var end = Math.min(vs.playlist.length, Math.ceil((scrollTop + viewHeight) / ITEM_H) + OVERSCAN);
+            var end = Math.min(vs.rows.length, Math.ceil((scrollTop + viewHeight) / ITEM_H) + OVERSCAN);
 
             if (start === vs.renderedStart && end === vs.renderedEnd) return;
 
@@ -412,12 +465,13 @@ window.__fireflyMusicViewConfig = viewConfigStr;
         }
 
         function vsSetContainerHeight() {
-            ui.playlistContainer.style.height = (local.vs.playlist.length * ITEM_H) + 'px';
+            ui.playlistContainer.style.height = (local.vs.rows.length * ITEM_H) + 'px';
         }
 
         function renderPlaylist(playlist: ViewTrack[], currentIndex: number) {
             var vs = local.vs;
             vs.playlist = playlist;
+            buildRows(playlist);
             vs.currentIndex = currentIndex;
             vs.renderedStart = -1;
             vs.renderedEnd = -1;
@@ -432,20 +486,23 @@ window.__fireflyMusicViewConfig = viewConfigStr;
 
         function updatePlaylistActiveUI(currentIndex: number) {
             var vs = local.vs;
-            var oldIndex = vs.currentIndex;
+            var oldTrackIndex = vs.currentIndex;
             vs.currentIndex = currentIndex;
 
-            if (vs.renderedEls[oldIndex]) {
-                vsApplyActiveStyle(vs.renderedEls[oldIndex], false);
+            var oldRow = oldTrackIndex >= 0 ? vs.trackToRow[oldTrackIndex] : undefined;
+            if (oldRow !== undefined && vs.renderedEls[oldRow]) {
+                vsApplyActiveStyle(vs.renderedEls[oldRow], false);
             }
 
             if (currentIndex >= 0 && currentIndex < vs.playlist.length) {
-                if (currentIndex < vs.renderedStart || currentIndex >= vs.renderedEnd) {
-                    ui.playlistContainer.scrollTop = currentIndex * ITEM_H;
+                var rowIdx = vs.trackToRow[currentIndex];
+                if (rowIdx === undefined) return;
+                if (rowIdx < vs.renderedStart || rowIdx >= vs.renderedEnd) {
+                    ui.playlistContainer.scrollTop = rowIdx * ITEM_H;
                     vsCommitRange();
                 }
-                if (vs.renderedEls[currentIndex]) {
-                    vsApplyActiveStyle(vs.renderedEls[currentIndex], true);
+                if (vs.renderedEls[rowIdx]) {
+                    vsApplyActiveStyle(vs.renderedEls[rowIdx], true);
                 }
             }
         }

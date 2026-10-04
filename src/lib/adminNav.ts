@@ -79,6 +79,12 @@ export const NAV_GROUPS: {
 				sections: ["users"],
 			},
 			{
+				label: "音乐分组",
+				href: "/admin/music/",
+				icon: "notice",
+				sections: ["music"],
+			},
+			{
 				label: "相册管理",
 				href: "/admin/gallery/",
 				icon: "gallery",
@@ -112,6 +118,7 @@ const SECTION_TITLES: Record<string, string> = {
 	pages: "页面管理",
 	comments: "评论审核",
 	users: "用户管理",
+	music: "音乐分组",
 	gallery: "相册管理",
 	"album-edit": "编辑相册",
 	settings: "站点设置",
@@ -129,6 +136,7 @@ const SECTION_GROUPS: Record<string, string> = {
 	pages: "站点模块",
 	comments: "站点模块",
 	users: "系统",
+	music: "站点模块",
 	gallery: "站点模块",
 	"album-edit": "站点模块",
 	settings: "系统",

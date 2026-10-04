@@ -184,6 +184,8 @@ window.__fireflyMusicConfig = managerConfigStr;
         artist?: string;
         lrc?: string;
         quality?: string;
+        /** 分组嗅探：该曲目所属组名（单列表组头分隔渲染用） */
+        group?: string;
         [key: string]: unknown;
     };
     var state: {
@@ -561,7 +563,29 @@ window.__fireflyMusicConfig = managerConfigStr;
             if (config.mode === 'meting' && config.meting) {
                 await fetchMetingData();
             } else if (config.mode === 'local') {
-                state.playlist = config.localPlaylist || [];
+                // 分组嗅探架构：优先取运行时清单 API（R2 ∩ D1 归属，删/加文件即时生效）；
+                // API 不可用时回退到构建期内嵌清单（localPlaylist），保证播放器始终可用
+                try {
+                    var res = await fetch('/api/music/playlist/', { credentials: 'include' });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    var data = await res.json();
+                    var flat: MusicTrack[] = [];
+                    (data.groups || []).forEach(function (g: { name: string; tracks: Array<{ name?: string; url?: string }> }) {
+                        (g.tracks || []).forEach(function (t) {
+                            flat.push({
+                                name: t.name || '',
+                                artist: '',
+                                url: t.url,
+                                group: g.name
+                            });
+                        });
+                    });
+                    if (flat.length > 0) state.playlist = flat;
+                    else state.playlist = config.localPlaylist || [];
+                } catch (e) {
+                    console.warn('playlist API failed, fallback to static playlist', e);
+                    state.playlist = config.localPlaylist || [];
+                }
             }
 
             if (state.playlist.length > 0) {

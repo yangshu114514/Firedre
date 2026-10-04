@@ -75,6 +75,7 @@ const VIEWS: Record<string, () => Promise<{ default: unknown }>> = {
 	gallery: () => import("./AdminGalleryHub.svelte"),
 	comments: () => import("./CommentModeration.svelte"),
 	users: () => import("./UserList.svelte"),
+	music: () => import("./MusicGroups.svelte"),
 	"album-edit": () => import("./AdminGalleryAlbum.svelte"),
 	settings: () => import("./AdminSettings.svelte"),
 };
@@ -115,6 +116,7 @@ function parsePath(pathname: string): { section: Section; slug?: string } {
 			"pages",
 			"comments",
 			"users",
+			"music",
 			"settings",
 		].includes(first)
 	) {
