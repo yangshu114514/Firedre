@@ -30,7 +30,10 @@ function applySecurityHeaders(headers: Headers) {
 	);
 	headers.set(
 		"Content-Security-Policy-Report-Only",
-		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+		// Turnstile（login/register）需要 challenges.cloudflare.com 的脚本与 iframe：
+		// 未声明时 frame-src 回退 default-src 'self'，会在报告里持续报违规；
+		// 一旦该头切为强制（去掉 -Report-Only）将直接挡掉人机验证。
+		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' blob: https://challenges.cloudflare.com; child-src 'self' blob: https://challenges.cloudflare.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
 	);
 }
 
