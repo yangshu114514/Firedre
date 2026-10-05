@@ -176,6 +176,16 @@ export const POST: APIRoute = async ({ params, request }) => {
 
 		return json({ message: "Not found" }, 404);
 	} catch (error) {
+		// TEMP-DIAG: 临时暴露错误详情定位 500，定位后立即移除
+		if (import.meta.env.PROD) {
+			return json(
+				{
+					message: "服务器错误",
+					diag: String((error as Error)?.message ?? error),
+				},
+				500,
+			);
+		}
 		return serverError(error);
 	}
 };
