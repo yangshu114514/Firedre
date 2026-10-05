@@ -226,4 +226,7 @@ async function submit(event: SubmitEvent) {
 	<p class="text-center text-xs text-50 mt-2 opacity-80">
 		忘记密码？请联系站长重置
 	</p>
+	<p class="text-center text-xs text-50 mt-2 opacity-80">
+		<a href="/admin/" class="hover:underline">管理员登录</a>
+	</p>
 </div>
