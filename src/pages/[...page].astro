@@ -24,35 +24,12 @@ if (!isValidPageSegment) return Astro.rewrite("/404/");
 const pageNum = rawPage ? Number(rawPage) : 1;
 // 分页大小来自静态 siteConfig（无对应设置组）
 const pageSize = Math.max(1, siteConfig.pagination.postsPerPage);
-// TEMP-DIAG
-let result: Awaited<ReturnType<typeof listPosts>>;
-try {
-	result = await listPosts(cfEnv, { page: pageNum, pageSize });
-} catch (e) {
-	return new Response(
-		JSON.stringify({ diag: "listPosts", err: String((e as Error)?.stack ?? e) }),
-		{ status: 500 },
-	);
-}
+const result = await listPosts(cfEnv, { page: pageNum, pageSize });
 if (pageNum > Math.max(1, Math.ceil(result.total / pageSize)))
 	return Astro.rewrite("/404/");
-let posts: ReturnType<typeof apiPostToPostForList>[];
-try {
-	posts = result.posts.map((p: Parameters<typeof apiPostToPostForList>[0]) => {
-		try {
-			return apiPostToPostForList(p);
-		} catch (e) {
-			throw new Error(
-				`map失败 slug=${String((p as { slug?: string })?.slug)} err=${String((e as Error)?.stack ?? e)}`,
-			);
-		}
-	});
-} catch (e) {
-	return new Response(
-		JSON.stringify({ diag: "map", err: String((e as Error)?.message ?? e) }),
-		{ status: 500 },
-	);
-}
+const posts: ReturnType<typeof apiPostToPostForList>[] = result.posts.map(
+	(p: Parameters<typeof apiPostToPostForList>[0]) => apiPostToPostForList(p),
+);
 const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
 
 const page = {

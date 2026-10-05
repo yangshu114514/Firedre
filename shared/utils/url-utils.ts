@@ -122,5 +122,5 @@ export function toMediaUrl(path: string): string {
 	const m = /^\/api\/covers\/(.+?)$/.exec(path);
 	if (!m) return path;
 	const rest = m[1].split("/").map(encodeURIComponent).join("/");
-	return `https://${MEDIA_IMAGE_HOST}/covers/${rest}/`;
+	return `https://${host}/covers/${rest}/`;
 }
