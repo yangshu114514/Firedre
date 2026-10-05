@@ -74,7 +74,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		);
 
 	// HTML 页面快路径：先查缓存，命中即返回，避免 seed/settings/version 串行 D1 查询
+	// 边缘 HTML 缓存曾缓存到空响应体（200 + 0 字节）并被持续命中，导致整站白屏。
+	// 先关闭读与写，保证正确性；如需重建，必须同时加空响应防护与可观测的失效开关。
+	const HTML_CACHE_ENABLED = false;
 	const isHtmlPage =
+		HTML_CACHE_ENABLED &&
 		request.method === "GET" &&
 		!url.pathname.startsWith("/admin") &&
 		!url.pathname.startsWith("/api") &&
@@ -225,7 +229,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			!url.pathname.startsWith("/admin") &&
 			!url.pathname.startsWith("/api");
 
-		if (isCacheableHtml && htmlCacheKey && response.status === 200) {
+		if (isCacheableHtml && HTML_CACHE_ENABLED && htmlCacheKey && response.status === 200) {
 			response.headers.set("Cache-Control", HTML_CACHE_CONTROL);
 			response.headers.set(
 				"Cloudflare-CDN-Cache-Control",
