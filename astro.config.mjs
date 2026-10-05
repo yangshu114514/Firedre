@@ -286,6 +286,11 @@ export default defineConfig({
 			"import.meta.env.MEDIA_MUSIC_HOST": JSON.stringify(
 				process.env.MEDIA_MUSIC_HOST || "music.yangshu.cc.cd",
 			),
+			// Turnstile site key：SSR frontmatter 读取，envPrefix 在服务端 bundle 不生效，
+			// 必须 define 成字面量（site key 本就是公开值，兜底无泄露风险）。
+			"import.meta.env.VITE_TURNSTILE_SITE_KEY": JSON.stringify(
+				process.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAESOVZOAonmMofXz",
+			),
 		},
 		plugins: [
 			tailwindcss(),
