@@ -1,4 +1,5 @@
 ---
+import PermPanel from "@/components/auth/PermPanel.svelte";
 import ProfileCard, {
 	type ProfileUser,
 } from "@/components/auth/ProfileCard.svelte";
@@ -44,5 +45,6 @@ const description = "管理你的账号资料与安全设置";
 			</div>
 		</div>
 		<ProfileCard client:load user={user} verified={verified} />
+		<PermPanel client:load />
 	</div>
 </MainGridLayout>

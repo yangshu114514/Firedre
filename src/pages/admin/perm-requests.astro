@@ -1,0 +1,39 @@
+---
+export const prerender = false;
+
+import AdminHead from "@components/layout/AdminHead.astro";
+import PermRequests from "@/components/admin/PermRequests.svelte";
+import { resolveBackendActor } from "@server/auth/perms";
+import { cfEnv } from "../../lib/api";
+
+// 后台门禁：管理员或持有后台权限点的用户；其余（含访客）回登录页
+const actor = await resolveBackendActor(Astro.request, cfEnv);
+if (!actor) {
+	return Astro.redirect(
+		`/login/?next=${encodeURIComponent(Astro.url.pathname)}`,
+	);
+}
+if (!actor.isAdmin) {
+	return new Response("需要管理员权限", {
+		status: 403,
+		headers: { "Content-Type": "text/plain; charset=utf-8" },
+	});
+}
+---
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>权限审批 - Firedre 后台</title>
+	<AdminHead />
+</head>
+<body style="margin:0;padding:24px;background:var(--page-bg);color:var(--deep-text);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+	<div style="max-width:920px;margin:0 auto">
+		<a href="/admin/" style="font-size:13px;color:var(--primary,#f97316);text-decoration:none">← 返回后台</a>
+		<div style="margin-top:14px">
+			<PermRequests client:load />
+		</div>
+	</div>
+</body>
+</html>

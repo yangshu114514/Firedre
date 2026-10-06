@@ -3,8 +3,21 @@ export const prerender = false;
 
 import AdminHead from "@components/layout/AdminHead.astro";
 import AdminApp from "../../components/admin/AdminApp.svelte";
+import { resolveBackendActor } from "@server/auth/perms";
+import { cfEnv } from "../../lib/api";
 
 import "@/styles/variables.styl";
+
+// 后台门禁：仅管理员或持有后台权限点的用户可进入，其余（含访客）回登录页。
+// 逃生开关 /admin/?adminlogin=1：直接渲染后台壳（内含旧的管理员用户名/密码登录），
+// 以防用户体系异常时站长被锁在后台外。
+const allowFallbackLogin = Astro.url.searchParams.get("adminlogin") === "1";
+const actor = await resolveBackendActor(Astro.request, cfEnv);
+if (!actor && !allowFallbackLogin) {
+	return Astro.redirect(
+		`/login/?next=${encodeURIComponent(Astro.url.pathname)}`,
+	);
+}
 ---
 <!doctype html>
 <html lang="zh-CN">

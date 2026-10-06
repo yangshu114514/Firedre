@@ -192,12 +192,15 @@ async function handleNav(event: MouseEvent) {
 	await navigate(href);
 }
 
+let isAdmin = $state(false);
+
 async function checkAuth() {
 	for (let attempt = 0; attempt < 3; attempt++) {
 		const ctrl = new AbortController();
 		const timer = setTimeout(() => ctrl.abort(), 10000);
 		try {
-			const resp = await fetch("/api/admin/me/", {
+			// 统一身份端点：管理员（admin_session 或 users.role=admin）与持权限点的用户都认
+			const resp = await fetch("/api/backend/me/", {
 				credentials: "include",
 				signal: ctrl.signal,
 			});
@@ -210,12 +213,20 @@ async function checkAuth() {
 			}
 			const data = await resp.json();
 			if (typeof data.authenticated === "boolean") {
-				authed = data.authenticated;
+				authed = !!data.authenticated && data.canAccess !== false;
+				isAdmin = !!data.isAdmin;
 				username = data.username || "";
 				clearTimeout(timer);
 				checking = false;
 				if (authed) {
-					await navigate(window.location.pathname);
+					// 仅持细粒度权限的账号默认落在「文章管理」
+					const path = window.location.pathname;
+					if (!isAdmin && (path === "/admin" || path === "/admin/")) {
+						window.history.replaceState({}, "", "/admin/posts/");
+						await navigate("/admin/posts/");
+					} else {
+						await navigate(path);
+					}
 				}
 				return;
 			}

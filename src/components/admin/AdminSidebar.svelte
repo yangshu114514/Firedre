@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from "svelte";
 import { iconSvg, isActive, NAV_GROUPS } from "@/lib/adminNav";
 
 interface Props {
@@ -21,6 +22,29 @@ let {
 	onToggleS3,
 	onGoSettings,
 }: Props = $props();
+
+// 身份自适应：管理员看全部菜单；仅持细粒度权限的账号只看到其可用的组。
+// 越权请求在接口层仍会被拒绝，此处只负责界面呈现。
+let isAdmin = $state(true);
+let roleLabel = $state("管理员");
+let visibleGroups = $state(NAV_GROUPS);
+
+onMount(async () => {
+	try {
+		const r = await fetch("/api/backend/me/", {
+			credentials: "include",
+			headers: { accept: "application/json" },
+		});
+		const d = await r.json().catch(() => null);
+		if (d?.authenticated) {
+			isAdmin = !!d.isAdmin;
+			visibleGroups = NAV_GROUPS.filter((g) => isAdmin || !g.adminOnly);
+			roleLabel = d.isAdmin ? "管理员" : (d.permLabels?.[0] ?? "受限账号");
+		}
+	} catch {
+		// 网络异常保持默认（显示全部菜单）
+	}
+});
 </script>
 
 <aside class="sidebar" class:open={open}>
@@ -33,7 +57,7 @@ let {
 			</div>
 
 			<nav class="nav">
-				{#each NAV_GROUPS as group (group.title)}
+				{#each visibleGroups as group (group.title)}
 					<div class="nav-group">
 						<p class="nav-title">{group.title}</p>
 						{#if group.settings}
@@ -88,7 +112,7 @@ let {
 					<img class="avatar" src="/favicon/firefly-32.png" alt="" />
 					<div class="user-meta">
 						<span class="user-name">{username || "admin"}</span>
-						<span class="user-role">管理员</span>
+						<span class="user-role">{roleLabel}</span>
 					</div>
 				</div>
 			</div>

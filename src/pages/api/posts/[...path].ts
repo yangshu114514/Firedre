@@ -1,4 +1,14 @@
-import { verifyAdminRequest } from "@server/auth/adminSession";
+import { resolveBackendActor } from "@server/auth/perms";
+
+/**
+ * 文章读写权限判定：管理员，或持有 post:create 权限点的用户。
+ * 未登录/无权限返回 false（GET 走脱敏分支，PUT/DELETE 直接 401）。
+ */
+async function canManagePosts(request: Request): Promise<boolean> {
+	const actor = await resolveBackendActor(request, cfEnv);
+	if (!actor) return false;
+	return actor.ability.can("read", "Post");
+}
 import { decodePostSlug, isValidPostSlug } from "@server/posts/frontmatter";
 import { redactPostSecrets } from "@server/posts/sanitize";
 import {

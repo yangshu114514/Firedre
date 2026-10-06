@@ -9,6 +9,8 @@ export const NAV_GROUPS: {
 	title: string;
 	items: NavItem[];
 	settings?: boolean;
+	/** 仅管理员可见（受限权限账号不渲染该组） */
+	adminOnly?: boolean;
 }[] = [
 	{
 		title: "内容管理",
@@ -89,6 +91,19 @@ export const NAV_GROUPS: {
 				href: "/admin/gallery/",
 				icon: "gallery",
 				sections: ["gallery", "album-edit"],
+			},
+		],
+	},
+	{
+		// 仅管理员可见（AdminSidebar 按身份过滤 adminOnly 组）
+		title: "权限",
+		adminOnly: true,
+		items: [
+			{
+				label: "权限审批",
+				href: "/admin/perm-requests/",
+				icon: "settings",
+				sections: ["perm-requests"],
 			},
 		],
 	},

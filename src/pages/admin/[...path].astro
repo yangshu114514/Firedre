@@ -3,8 +3,18 @@ export const prerender = false;
 
 import AdminHead from "@components/layout/AdminHead.astro";
 import AdminApp from "../../components/admin/AdminApp.svelte";
+import { resolveBackendActor } from "@server/auth/perms";
+import { cfEnv } from "../../lib/api";
 
 import "@/styles/variables.styl";
+
+// 后台门禁：仅管理员或持有后台权限点的用户可进入（/admin/setup/ 为独立页面，不受影响）
+const actor = await resolveBackendActor(Astro.request, cfEnv);
+if (!actor) {
+	return Astro.redirect(
+		`/login/?next=${encodeURIComponent(Astro.url.pathname)}`,
+	);
+}
 ---
 <!doctype html>
 <html lang="zh-CN">
