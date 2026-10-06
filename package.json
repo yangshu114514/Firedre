@@ -36,6 +36,7 @@
   "dependencies": {
     "@astrojs/check": "^0.9.10",
     "@astrojs/svelte": "9.0.1",
+    "@casl/ability": "^7.0.1",
     "@fancyapps/ui": "^6.1.14",
     "@iconify-json/fa7-brands": "^1.2.4",
     "@iconify-json/fa7-regular": "^1.2.3",

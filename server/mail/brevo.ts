@@ -5,7 +5,8 @@
 export interface MailEnv {
 	BREVO_API_KEY?: string;
 	MAIL_FROM?: string; // "admin@yangshu.cc" 或 "杨树 <admin@yangshu.cc>"
-	ENVIRONMENT?: string; // 'prod' 才真发；其余打日志跳过
+	ENVIRONMENT?: string; // 仅当显式设为非 'prod' 才跳过真发；缺省按生产处理，防止线上静默不发信
+	DB?: D1Database; // 可选：写入 mail_log 便于排查，失败不影响发信
 }
 
 export interface SendMailInput {
@@ -57,16 +58,46 @@ async function postOnce(
 	}
 }
 
+/** 发信结果落库（尽力而为，绝不抛出） */
+async function logMail(
+	db: D1Database | undefined,
+	to: string,
+	subject: string,
+	status: string,
+	detail = "",
+): Promise<void> {
+	if (!db) return;
+	try {
+		await db
+			.prepare(
+				"INSERT INTO mail_log (id, to_email, subject, status, detail) VALUES (?, ?, ?, ?, ?)",
+			)
+			.bind(
+				crypto.randomUUID(),
+				to,
+				subject.slice(0, 200),
+				status,
+				detail.slice(0, 500),
+			)
+			.run();
+	} catch (e) {
+		console.error("[mail] mail_log 写入失败:", e);
+	}
+}
+
 /**
- * 发送邮件。dev 环境（ENVIRONMENT !== 'prod'）只打日志不真发。
- * 失败重试 1 次；仍失败记日志并返回 {ok:false}（绝不抛出）。
+ * 发送邮件。仅当 ENVIRONMENT 显式设为非 'prod' 时跳过真发（缺省按生产处理）。
+ * 失败重试 1 次；仍失败记日志并返回 {ok:false}（绝不抛出），结果写入 mail_log。
  */
 export async function sendMail(
 	env: MailEnv,
 	input: SendMailInput,
 ): Promise<SendMailResult> {
+	const db = env.DB;
+	const envTag = env.ENVIRONMENT?.trim();
+
 	// 非生产环境：打印内容便于本地联调（含验证链接，dev 注册后可直接取用）
-	if (env.ENVIRONMENT !== "prod") {
+	if (envTag && envTag !== "prod") {
 		console.log(
 			"[mail:dev skip]",
 			input.to,
@@ -75,18 +106,21 @@ export async function sendMail(
 			"|",
 			stripHtmlForLog(input.html),
 		);
+		await logMail(db, input.to, input.subject, "skipped_dev", `ENVIRONMENT=${envTag}`);
 		return { ok: true, skipped: true };
 	}
 
 	const apiKey = env.BREVO_API_KEY?.trim();
 	if (!apiKey) {
 		console.error("[mail] BREVO_API_KEY 未配置，邮件未发送:", input.to);
+		await logMail(db, input.to, input.subject, "no_api_key");
 		return { ok: false, error: "BREVO_API_KEY missing" };
 	}
 
 	const sender = parseMailFrom(env.MAIL_FROM);
 	if (!sender.email) {
 		console.error("[mail] MAIL_FROM 未配置，邮件未发送:", input.to);
+		await logMail(db, input.to, input.subject, "no_sender");
 		return { ok: false, error: "MAIL_FROM missing" };
 	}
 
@@ -100,7 +134,10 @@ export async function sendMail(
 	let lastError = "";
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const res = await postOnce(apiKey, payload);
-		if (res.ok) return { ok: true };
+		if (res.ok) {
+			await logMail(db, input.to, input.subject, "sent", `sender=${sender.email}`);
+			return { ok: true };
+		}
 
 		lastError = `HTTP ${res.status}: ${res.text.slice(0, 300)}`;
 		console.error(`[mail] 发送失败（第 ${attempt + 1} 次）:`, lastError);
@@ -108,6 +145,7 @@ export async function sendMail(
 	}
 
 	// 失败不抛出：调用方以落库为准，邮件可走重发
+	await logMail(db, input.to, input.subject, "failed", lastError);
 	return { ok: false, error: lastError };
 }
 

@@ -69,6 +69,10 @@ onMount(() => {
 				sitekey: siteKey,
 				action,
 				theme,
+				// 防泄漏：失败/过期不自动重试。此前 auto_timeout 会无限循环新建
+				// challenge iframe 并重复请求，挂机时内存只涨不落。
+				retry: "never",
+				"refresh-expired": "never",
 				callback: (t: string) => {
 					token = t;
 				},
