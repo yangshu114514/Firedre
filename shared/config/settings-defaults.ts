@@ -5,12 +5,12 @@ export const settingsDefaults = {
 		cardBorder: false,
 		cardFollowTheme: false,
 		cardRadius: 1,
-		faviconUrl: "/favicon/firefly-32.png",
+		faviconUrl: "/favicon/site-192.png",
 		title: "Firedre",
 		subtitle: "Demo site",
 		description:
 			"Firedre 是基于 Astro Firefly 主题深度云原生化改造的个人博客，全站运行于 Cloudflare Pages / D1 / R2：文章、动态、相册、书签导航、追番数据与留言板一应俱全，后台可视化管理，无需服务器即可稳定运行。",
-		siteUrl: "https://firedre.994613.xyz",
+		siteUrl: "https://yangshu.cc.cd",
 		siteStartDate: "2025-01-01",
 		timezone: "Asia/Shanghai",
 		pageWidth: 100,
@@ -138,10 +138,16 @@ export const settingsDefaults = {
 	theme: {
 		mode: "banner",
 		playerEnable: true,
+		// 轮播图来源 = Halo Ethereal 主题迁移值（extensions_all.jsonl → Ethereal-configMap.style）：
+		//   bannerStyle.mode = "carousel"，src/images = https://picsum.photos/2560/1440.webp
+		//   移动端 images = https://picsum.photos/1600/1600.webp
+		// 外链会经 runtime/theme.ts 的 proxiedWallpaper 走 /api/cover-proxy/ 同源代理。
+		// 轮播需 ≥2 张才启用（banner-visibility-utils: hasMultipleImages），
+		// 故在 Halo 原链接之外补 seed 变体，凑成真正会轮播的多图（picsum seed 图稳定且互不相同）。
 		bannerUrl:
-			"assets/images/DesktopWallpaper/d1.avif,assets/images/DesktopWallpaper/d2.avif,assets/images/DesktopWallpaper/d3.avif,assets/images/DesktopWallpaper/d4.avif,assets/images/DesktopWallpaper/d5.avif,assets/images/DesktopWallpaper/d6.avif",
+			"https://picsum.photos/2560/1440.webp,https://picsum.photos/seed/yangshu-2/2560/1440.webp,https://picsum.photos/seed/yangshu-3/2560/1440.webp,https://picsum.photos/seed/yangshu-4/2560/1440.webp,https://picsum.photos/seed/yangshu-5/2560/1440.webp",
 		mobileImages:
-			"assets/images/MobileWallpaper/m1.avif,assets/images/MobileWallpaper/m2.avif,assets/images/MobileWallpaper/m3.avif,assets/images/MobileWallpaper/m4.avif,assets/images/MobileWallpaper/m5.avif,assets/images/MobileWallpaper/m6.avif",
+			"https://picsum.photos/1600/1600.webp,https://picsum.photos/seed/yangshu-m2/1600/1600.webp,https://picsum.photos/seed/yangshu-m3/1600/1600.webp,https://picsum.photos/seed/yangshu-m4/1600/1600.webp,https://picsum.photos/seed/yangshu-m5/1600/1600.webp",
 		playerUrl: "https://bed.twoleaf.cn/file/1785658612716_firefly.mp4",
 		dimOpacity: 0.2,
 		playerMode: "random",
@@ -155,9 +161,10 @@ export const settingsDefaults = {
 		typewriterSpeed: 100,
 		typewriterDeleteSpeed: 50,
 		typewriterPauseTime: 2000,
-		carousel: false,
+		// Halo 迁移：bannerStyle.carousel.effect = "fade"、dwellMs = 5000
+		carousel: true,
 		carouselInterval: 5000,
-		carouselTransition: "zoom",
+		carouselTransition: "fade",
 		overlayOpacity: 0.8,
 		overlayBlur: 10,
 		overlayCardOpacity: 0.6,

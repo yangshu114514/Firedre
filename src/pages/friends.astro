@@ -38,7 +38,7 @@ type FriendsCardItem = {
 
 const items: FriendsCardItem[] = friendRows.map((friend) => ({
 	title: friend.title,
-	imgurl: toMediaUrl(friend.imgurl),
+	imgurl: toMediaUrl(friend.imgurl, Astro.url.hostname),
 	siteurl: friend.siteurl,
 	desc: friend.desc ?? "",
 	tags: (friend.tags || "")

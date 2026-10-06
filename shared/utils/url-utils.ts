@@ -109,16 +109,47 @@ export function url(path: string): string {
 }
 
 /**
+ * 媒体域 Cookie 族：media_tkt 门票的 Domain 作用域（见 server/media/ticket.ts
+ * 的 ticketSetCookie —— 宿主在 *.yangshu.cc.cd 族内时种 Domain=.yangshu.cc.cd，
+ * 否则退化为 host-only）。
+ * 这里从媒体域反推同族根域（媒体域约定为 <sub>.<apex>，故去掉首段标签），
+ * 保证「能否跨子域共用门票」的判定与种票侧一致。
+ */
+function mediaCookieFamily(mediaHost: string): string {
+	const parts = mediaHost.trim().toLowerCase().split(".").filter(Boolean);
+	return parts.length > 2 ? parts.slice(1).join(".") : parts.join(".");
+}
+
+/** 当前站点宿主是否能与媒体域共用 media_tkt 门票（同族子域才行） */
+export function sharesMediaCookieDomain(
+	hostname: string | undefined | null,
+	mediaHost: string,
+): boolean {
+	if (!hostname || !mediaHost) return false;
+	const h = hostname.trim().toLowerCase();
+	const family = mediaCookieFamily(mediaHost);
+	if (!family) return false;
+	return h === family || h.endsWith(`.${family}`);
+}
+
+/**
  * 媒体直链重写（媒体域架构）：
  * D1 中存储的站内媒体引用为 /api/covers/<key> 形态（R2 covers/ 前缀）。
- * 渲染输出时重写为 image 自定义域直连 URL（浏览器同父域自动携带 media_tkt 门票，
- * 不经 Pages 中转；R2 对象 immutable 长缓存）。非生产或未配置域名时原样返回。
+ * 仅当站点自身运行在媒体域同族域（*.yangshu.cc.cd）时，才改写为 image 自定义域直链：
+ * 此时 media_tkt 是 Domain=.yangshu.cc.cd 的跨子域 Cookie，浏览器会自动携带，
+ * 从而绕过 Pages 中转、直接命中 R2 immutable 长缓存。
+ *
+ * 反之（如 *.pages.dev 预览域）门票退化为 host-only，跨域请求不会携带，
+ * 直连必然 403 —— 此时必须保持站内 /api/covers/ 相对路径
+ * （同源路由 src/pages/api/covers/[...path].ts 直接读 R2，无需门票）。
  */
-export function toMediaUrl(path: string): string {
+export function toMediaUrl(path: string, hostname?: string): string {
 	if (!path) return path;
 	const host = (import.meta.env.MEDIA_IMAGE_HOST as string | undefined) ?? "";
 	// 仅生产重写：dev 无票据 cookie，改写会导致图片 403
 	if (!host || !import.meta.env.PROD) return path;
+	// 门票无法跨域携带时，绝不能改写（否则头像/封面全部 403）
+	if (!sharesMediaCookieDomain(hostname, host)) return path;
 	const m = /^\/api\/covers\/(.+?)$/.exec(path);
 	if (!m) return path;
 	const rest = m[1].split("/").map(encodeURIComponent).join("/");

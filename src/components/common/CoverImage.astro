@@ -85,9 +85,10 @@ const remoteReferrerPolicy =
 
 // 远程 http(s) 封面走同源代理（按宽度缩放 + 边缘缓存），data:/站点相对路径保持原样
 // 项目 trailingSlash: "always"，路径带斜杠避免 301 跳转
-// toMediaUrl：/api/covers/ 引用重写为 image 媒体域直链（不经 Pages 中转）
+// toMediaUrl：仅当站点与媒体域同族（门票可跨子域）时才重写为 image 域直链，
+// 否则保持站内 /api/covers/ 同源路径（pages.dev 预览域下直连必 403）
 const remoteSrc = isPublic
-	? toMediaUrl(src) || url(src)
+	? toMediaUrl(src, Astro.url.hostname) || url(src)
 	: src.startsWith("http")
 		? url(`/api/cover-proxy/?u=${encodeURIComponent(src)}&w=${widths[0]}`)
 		: src;

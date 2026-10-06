@@ -192,6 +192,13 @@ const canonicalUrl =
 	toAbsoluteUrl(Astro.url.pathname, effectiveSiteUrl) ?? Astro.url.toString();
 
 const siteLogo = await getSiteLogo(effectiveSiteUrl);
+
+// 社交缩略图（og:image / twitter:image）：文章封面优先 → 站点头像 → logo/favicon。
+// 用户要求「网站缩略图显示我的头像」，故头像优先于主题默认 logo。
+const socialImage =
+	ogImageUrl ??
+	avatarUrl ??
+	(typeof siteLogo === "string" ? siteLogo : siteLogo?.url);
 ---
 
 <!doctype html>
@@ -257,11 +264,11 @@ const siteLogo = await getSiteLogo(effectiveSiteUrl);
     />
     <meta
       property="og:image"
-      content={ogImageUrl ?? (typeof siteLogo === "string" ? siteLogo : siteLogo?.url)}
+      content={socialImage}
     />
     <meta
       name="twitter:image"
-      content={ogImageUrl ?? (typeof siteLogo === "string" ? siteLogo : siteLogo?.url)}
+      content={socialImage}
     />
     {
       setOGTypeArticle ? (

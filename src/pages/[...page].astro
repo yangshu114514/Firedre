@@ -15,8 +15,9 @@ export const prerender = false;
 const { listPosts } = await import("@server/posts/service");
 const { cfEnv } = await import("../lib/api");
 
-// 路由为根级 catch-all：仅 /page/<正整数>/ 合法。非法段（如 /__nope__/）不得回落首页，
-// 否则任意未知 URL 都会输出首页副本并自指 canonical（软 404 / 重复内容）。
+// 路由为根级 catch-all：Astro.params.page 捕获的是「整段剩余路径」，
+// 故仅 /<正整数>/ 合法（如 /2/）。/page/2/ 会得到 page="page/2" 而落到 404。
+// 非法段（如 /__nope__/）不得回落首页，否则任意未知 URL 都会输出首页副本并自指 canonical（软 404 / 重复内容）。
 const rawPage = Astro.params.page;
 const isValidPageSegment = rawPage === undefined || /^[1-9]\d*$/.test(rawPage);
 if (!isValidPageSegment) return Astro.rewrite("/404/");
@@ -32,6 +33,10 @@ const posts: ReturnType<typeof apiPostToPostForList>[] = result.posts.map(
 );
 const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
 
+// 分页 URL 唯一真源：与 Pagination.astro 的 getPageUrl / jumpHrefTemplate 保持一致，
+// 一律 /<n>/（第 1 页为 /）。此前此处写成 /page/<n>/，导致「下一页」指向 404。
+const pageHref = (n: number) => (n <= 1 ? "/" : `/${n}/`);
+
 const page = {
 	data: posts,
 	page: result.page,
@@ -42,11 +47,11 @@ const page = {
 	start: (result.page - 1) * pageSize + 1,
 	end: Math.min(result.page * pageSize, result.total),
 	url: {
-		current: result.page > 1 ? `/page/${result.page}/` : "/",
-		prev: result.page > 1 ? `/page/${result.page - 1}/` : undefined,
-		next: result.page < totalPages ? `/page/${result.page + 1}/` : undefined,
+		current: pageHref(result.page),
+		prev: result.page > 1 ? pageHref(result.page - 1) : undefined,
+		next: result.page < totalPages ? pageHref(result.page + 1) : undefined,
 		first: result.page > 1 ? "/" : undefined,
-		last: result.page < totalPages ? `/page/${totalPages}/` : undefined,
+		last: result.page < totalPages ? pageHref(totalPages) : undefined,
 		isFirst: result.page <= 1,
 		isLast: result.page >= totalPages,
 	},

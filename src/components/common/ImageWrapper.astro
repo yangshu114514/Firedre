@@ -92,8 +92,9 @@ const imageClass = fadeIn
 const imageStyle = `object-position: ${position}`;
 
 // 检查是否需要添加 referrerpolicy（仅对非本地图片）
-// toMediaUrl：/api/covers/ 引用重写为 image 媒体域直链（渲染期完成，浏览器直连）
-const fullSrc = isPublic ? toMediaUrl(src) || url(src) : src;
+// toMediaUrl：仅当站点与媒体域同族（门票可跨子域）时才重写为 image 域直链
+const mediaHostname = Astro.url.hostname;
+const fullSrc = isPublic ? toMediaUrl(src, mediaHostname) || url(src) : src;
 const referrerPolicy =
 	!isLocal && shouldAddNoReferrer(fullSrc) ? "no-referrer" : undefined;
 
@@ -143,5 +144,5 @@ const lqipProps = isLocal
             {...responsiveProps}
         />
     )}
-    {!isLocal && <img src={isPublic ? (toMediaUrl(src) || url(src)) : src} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} fetchpriority={fetchpriority} data-cover-img={dataCoverImg ? true : undefined} referrerpolicy={referrerPolicy} />}
+    {!isLocal && <img src={isPublic ? (toMediaUrl(src, mediaHostname) || url(src)) : src} alt={alt || ""} class={imageClass} style={imageStyle} loading={loading} fetchpriority={fetchpriority} data-cover-img={dataCoverImg ? true : undefined} referrerpolicy={referrerPolicy} />}
 </div>

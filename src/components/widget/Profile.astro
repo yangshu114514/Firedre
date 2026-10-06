@@ -30,7 +30,10 @@ const settings =
 	).settings ?? {};
 // 后台「个人资料」分组（与 Layout.astro 同序：分组键 → 扁平键 → 静态兜底）
 const profile = settings.profile ?? {};
-const effectiveAvatar = toMediaUrl(settings.avatar || profileConfig.avatar || "");
+const effectiveAvatar = toMediaUrl(
+	settings.avatar || profileConfig.avatar || "",
+	Astro.url.hostname,
+);
 // LCP 头像：默认本地头像直出静态资源（不经 _image 按需优化，避免首屏 on-demand 延迟）
 const rawAvatarUrl =
 	(!settings.avatar || settings.avatar === profileConfig.avatar) &&
