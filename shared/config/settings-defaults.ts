@@ -37,11 +37,11 @@ export const settingsDefaults = {
 		pagination: { postsPerPage: 10 },
 		favicon: [{ src: "/favicon/firefly-32.png" }],
 		navbar: {
+			// 站点 logo 用站长本人头像（R2 covers/site/avatar-yangshu.webp，走站内同源路由）
 			logo: {
-				type: "image",
-				value: "assets/images/logo/firefly-light.png",
-				valueDark: "assets/images/logo/firefly-dark.png",
-				alt: "🍀",
+				type: "url",
+				value: "/api/covers/site/avatar-yangshu.webp/",
+				alt: "杨树",
 			},
 			title: "杨树",
 			widthFull: false,
@@ -133,11 +133,13 @@ export const settingsDefaults = {
 		avatar: "assets/images/avatar.avif",
 		bio: "在树下写字的人",
 		links:
-			'[{"name":"qq","icon":"fa7-brands:qq","url":"https://qm.qq.com/q/ZGsFa8qX2G","showName":false},{"name":"GitHub","icon":"fa7-brands:github","url":"https://github.com/jeio258","showName":false},{"name":"Email","icon":"fa7-solid:envelope","url":"mailto:xiaye@msn.com","showName":false},{"name":"RSS","icon":"fa7-solid:rss","url":"/rss/","showName":false}]',
+			'[{"name":"GitHub","icon":"fa7-brands:github","url":"https://github.com/yangshu114514","showName":false},{"name":"Email","icon":"fa7-solid:envelope","url":"mailto:ksyangshu@outlook.com","showName":false},{"name":"RSS","icon":"fa7-solid:rss","url":"/rss/","showName":false}]',
 	},
 	theme: {
 		mode: "banner",
-		playerEnable: true,
+		// 背景视频已关闭：原值是主题作者 CDN 的 firefly.mp4（bed.twoleaf.cn）。
+		// 首页背景统一走下方 Halo 迁移来的图片轮播；关闭后导航栏「播放背景视频」按钮也不再出现。
+		playerEnable: false,
 		// 轮播图来源 = Halo Ethereal 主题迁移值（extensions_all.jsonl → Ethereal-configMap.style）：
 		//   bannerStyle.mode = "carousel"，src/images = https://picsum.photos/2560/1440.webp
 		//   移动端 images = https://picsum.photos/1600/1600.webp
@@ -148,7 +150,6 @@ export const settingsDefaults = {
 			"https://picsum.photos/2560/1440.webp,https://picsum.photos/seed/yangshu-2/2560/1440.webp,https://picsum.photos/seed/yangshu-3/2560/1440.webp,https://picsum.photos/seed/yangshu-4/2560/1440.webp,https://picsum.photos/seed/yangshu-5/2560/1440.webp",
 		mobileImages:
 			"https://picsum.photos/1600/1600.webp,https://picsum.photos/seed/yangshu-m2/1600/1600.webp,https://picsum.photos/seed/yangshu-m3/1600/1600.webp,https://picsum.photos/seed/yangshu-m4/1600/1600.webp,https://picsum.photos/seed/yangshu-m5/1600/1600.webp",
-		playerUrl: "https://bed.twoleaf.cn/file/1785658612716_firefly.mp4",
 		dimOpacity: 0.2,
 		playerMode: "random",
 		homeTextEnable: true,
@@ -171,7 +172,7 @@ export const settingsDefaults = {
 		// ── 结构字段（A4：自 backgroundWallpaper 原值整体内嵌，getter 透传源） ──
 		wallpaperBase: {
 			mode: "banner",
-			playerEnable: true,
+			playerEnable: false,
 			src: {
 				desktop: [
 					"assets/images/DesktopWallpaper/d1.avif",
@@ -218,18 +219,13 @@ export const settingsDefaults = {
 						{
 							name: "GitHub",
 							icon: "fa7-brands:github",
-							url: "https://github.com/jeio258/Firedre",
+							url: "https://github.com/yangshu114514",
 							showName: true,
 						},
 						{
 							name: "Email",
 							icon: "fa7-solid:envelope",
-							url: "mailto:xiaye@msn.com",
-						},
-						{
-							name: "Sponsor",
-							icon: "material-symbols:favorite",
-							url: "https://blog.cuteleaf.cn/sponsor/",
+							url: "mailto:ksyangshu@outlook.com",
 						},
 						{ name: "RSS", icon: "fa7-solid:rss", url: "/rss/" },
 					],
