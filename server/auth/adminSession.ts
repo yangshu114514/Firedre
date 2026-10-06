@@ -212,5 +212,15 @@ export async function verifyAdminRequest(
 	request: Request,
 	env?: CloudflareEnv,
 ) {
-	return Boolean(await getAuthenticatedAdminUsername(request, env));
+	// 传统 admin_users 会话（保留兼容）
+	if (await getAuthenticatedAdminUsername(request, env)) return true;
+
+	// users 体系：role='admin' 即管理员（动态导入避免循环依赖）
+	try {
+		const { getAuthUser } = await import("./userSession");
+		const me = await getAuthUser(request, env as never);
+		return me?.role === "admin";
+	} catch {
+		return false;
+	}
 }

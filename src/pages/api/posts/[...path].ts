@@ -7,7 +7,7 @@ import { resolveBackendActor } from "@server/auth/perms";
 async function canManagePosts(request: Request): Promise<boolean> {
 	const actor = await resolveBackendActor(request, cfEnv);
 	if (!actor) return false;
-	return actor.ability.can("read", "Post");
+	return actor.ability.can("update", "Post");
 }
 import { decodePostSlug, isValidPostSlug } from "@server/posts/frontmatter";
 import { redactPostSecrets } from "@server/posts/sanitize";
@@ -40,7 +40,7 @@ export const prerender = false;
 export const GET: APIRoute = async ({ params, request }) => {
 	const segments = pathSegments(params);
 	const url = new URL(request.url);
-	const isAdmin = await verifyAdminRequest(request, cfEnv);
+	const isAdmin = await canManagePosts(request);
 
 	try {
 		if (segments[0] === "taxonomy" && segments.length >= 2) {
@@ -118,7 +118,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
 	if (!slug || !isValidPostSlug(decodePostSlug(slug)))
 		return badRequest("文章 slug 格式无效");
 
-	const isAdmin = await verifyAdminRequest(request, cfEnv);
+	const isAdmin = await canManagePosts(request);
 	if (!isAdmin) return unauthorized();
 
 	// 写入操作限流：每分钟最多 10 次（D1 持久化，跨边缘节点一致）
@@ -150,7 +150,7 @@ export const DELETE: APIRoute = async ({ params, request }) => {
 	if (!slug || !isValidPostSlug(decodePostSlug(slug)))
 		return badRequest("文章 slug 格式无效");
 
-	const isAdmin = await verifyAdminRequest(request, cfEnv);
+	const isAdmin = await canManagePosts(request);
 	if (!isAdmin) return unauthorized();
 
 	return withRateLimit(

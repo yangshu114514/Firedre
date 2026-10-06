@@ -65,7 +65,7 @@ export function fromServiceError(error: unknown) {
 	return serverError(error);
 }
 
-// 写路径通用样板：强制管理员鉴权 + 统一错误映射，消除各写路由重复的守卫与 try/catch 包裹
+// 写路径通用样板：统一后台身份鉴权（传统 admin 会话或 users.admin）+ 统一错误映射
 export function withAdmin(
 	handler: (context: APIContext) => Promise<Response>,
 ): APIRoute {

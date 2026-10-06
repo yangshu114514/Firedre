@@ -15,6 +15,7 @@ import {
 	hasAdminUser,
 	updateAdminUserPassword,
 } from "@server/auth/adminUser";
+import { resolveBackendActor } from "@server/auth/perms";
 import {
 	createD1LoginRateLimit,
 	formatLoginRateLimitMessage,
@@ -193,8 +194,10 @@ export const GET: APIRoute = async ({ params, request }) => {
 		return json({ message: "Not found" }, 404);
 
 	try {
-		const isAdmin = await verifyAdminRequest(request, cfEnv);
-		if (!isAdmin) return json({ authenticated: false }, 200, "private");
+		// 统一身份：传统 admin 会话，或 users 体系的管理员/持权用户
+		const actor = await resolveBackendActor(request, cfEnv);
+		const isAdmin = actor?.isAdmin === true;
+		if (!actor) return json({ authenticated: false }, 200, "private");
 
 		if (action === "me") {
 			const username = await getAuthenticatedAdminUsername(request, cfEnv);
