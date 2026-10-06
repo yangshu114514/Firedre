@@ -145,13 +145,21 @@ export function sharesMediaCookieDomain(
  */
 export function toMediaUrl(path: string, hostname?: string): string {
 	if (!path) return path;
+	const m = /^\/api\/covers\/(.+?)\/?$/.exec(path);
+	if (!m) return path;
+	// 逐段编码 + 末尾保留斜杠：项目 trailingSlash:"always"，
+	// /api/covers/<k> 无尾斜杠会被 Astro 判为未匹配 → 404（实测 404 vs 200）。
+	const encoded = m[1]
+		.replace(/\/+$/, "")
+		.split("/")
+		.map(encodeURIComponent)
+		.join("/");
+	const sameOrigin = `/api/covers/${encoded}/`;
+
 	const host = (import.meta.env.MEDIA_IMAGE_HOST as string | undefined) ?? "";
 	// 仅生产重写：dev 无票据 cookie，改写会导致图片 403
-	if (!host || !import.meta.env.PROD) return path;
-	// 门票无法跨域携带时，绝不能改写（否则头像/封面全部 403）
-	if (!sharesMediaCookieDomain(hostname, host)) return path;
-	const m = /^\/api\/covers\/(.+?)$/.exec(path);
-	if (!m) return path;
-	const rest = m[1].split("/").map(encodeURIComponent).join("/");
-	return `https://${host}/covers/${rest}/`;
+	if (!host || !import.meta.env.PROD) return sameOrigin;
+	// 门票无法跨子域携带时（如 *.pages.dev 预览域），必须走站内同源路由
+	if (!sharesMediaCookieDomain(hostname, host)) return sameOrigin;
+	return `https://${host}/covers/${encoded}/`;
 }
