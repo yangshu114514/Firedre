@@ -169,7 +169,7 @@ async function logout() {
 						</span>
 					{/if}
 					<span class="text-xs px-2 py-0.5 rounded-full bg-(--primary)/10 text-(--primary) border border-(--primary)/30">
-						普通用户
+						{user.role === "admin" ? "管理员" : "普通用户"}
 					</span>
 				</div>
 			</div>
