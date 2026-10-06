@@ -46,7 +46,8 @@ async function postOnce(
 		const r = await fetch(BREVO_ENDPOINT, {
 			method: "POST",
 			headers: {
-				apikey: apiKey,
+				// Brevo 认证头必须是 "api-key"（写成 apikey 会被判为缺少认证头 → 401）
+				"api-key": apiKey,
 				"Content-Type": "application/json",
 			},
 			body,
