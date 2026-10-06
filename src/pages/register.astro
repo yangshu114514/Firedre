@@ -19,7 +19,9 @@ const description = "注册 Firedre 账号，验证邮箱后参与评论与互�
 <Layout title={title} description={description}>
 	<main class="auth-standalone">
 		<a href="/" class="auth-standalone__back">← 返回首页</a>
-		<RegisterCard client:load turnstileSiteKey={turnstileSiteKey} />
+		<div class="auth-standalone__card">
+			<RegisterCard client:load turnstileSiteKey={turnstileSiteKey} />
+		</div>
 	</main>
 </Layout>
 
@@ -32,6 +34,12 @@ const description = "注册 Firedre 账号，验证邮箱后参与评论与互�
 		justify-content: center;
 		gap: 1rem;
 		padding: 2.5rem 1rem;
+	}
+	.auth-standalone__card {
+		width: 100%;
+		/* 主题把 Tailwind 容器尺度重定义成 --container-md:100%（xs/sm/md 为流式），
+		   裸 Layout 下 max-w-md 不再限宽，故在此显式给定卡片宽度 */
+		max-width: 28rem;
 	}
 	.auth-standalone__back {
 		font-size: 0.875rem;
