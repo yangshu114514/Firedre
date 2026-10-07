@@ -4,6 +4,32 @@ import { cfEnv, methodNotAllowed } from "../../lib/api";
 
 export const prerender = false;
 
+/**
+ * 私网 / 保留地址 / 云元数据端点黑名单。
+ *
+ * 本端点是匿名可用的「外链图片代理」（?u=<任意 https URL>），若不限制目标，
+ * 攻击者可借它访问内网服务或云元数据端点（SSRF），也能把它当成匿名抓取中继。
+ * Workers 运行时没有本地回环服务，但入口处拦掉才是正确姿势（纵深防御）。
+ */
+const BLOCKED_HOST_PATTERNS: RegExp[] = [
+	/^localhost$/i,
+	/^127\./, // 127.0.0.0/8
+	/^0\./, // 0.0.0.0/8
+	/^10\./, // 10.0.0.0/8
+	/^192\.168\./, // 192.168.0.0/16
+	/^169\.254\./, // 169.254.0.0/16（含 169.254.169.254 云元数据）
+	/^172\.(1[6-9]|2\d|3[01])\./, // 172.16.0.0/12
+	/^\[?::1\]?$/i, // IPv6 回环
+	/^\[?(fc|fd)[0-9a-f]{2}:/i, // IPv6 唯一本地地址 fc00::/7
+	/^\[?fe[89ab][0-9a-f]:/i, // IPv6 链路本地 fe80::/10
+	/\.(internal|local|localhost|lan|home)$/i, // 常见内网 TLD
+	/^metadata\./i, // 云厂商元数据主机名
+];
+
+function isBlockedHost(hostname: string): boolean {
+	return BLOCKED_HOST_PATTERNS.some((re) => re.test(hostname));
+}
+
 // 远程封面同源代理：按宽度请求 Cloudflare 图像缩放；缩放不可用时透传原图，失败时 302 回退原图
 export const GET: APIRoute = async ({ request }) => {
 	const url = new URL(request.url);
@@ -16,8 +42,12 @@ export const GET: APIRoute = async ({ request }) => {
 	} catch {
 		return new Response("Bad Request", { status: 400 });
 	}
-	// 仅代理 https 外链，且不允许代理本站
-	if (target.protocol !== "https:" || target.hostname === url.hostname) {
+	// 仅代理 https 外链；不允许代理本站；不允许指向私网/保留地址/元数据端点
+	if (
+		target.protocol !== "https:" ||
+		target.hostname === url.hostname ||
+		isBlockedHost(target.hostname)
+	) {
 		return new Response("Bad Request", { status: 400 });
 	}
 

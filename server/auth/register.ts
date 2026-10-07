@@ -77,20 +77,62 @@ export interface TurnstileResult {
 	message?: string;
 }
 
+function isLoopbackHost(host?: string): boolean {
+	if (!host) return false;
+	const h = host.toLowerCase().split(":")[0];
+	return (
+		h === "localhost" ||
+		h === "127.0.0.1" ||
+		h === "[::1]" ||
+		h === "::1" ||
+		h === "0.0.0.0"
+	);
+}
+
+/**
+ * 是否必须强制人机校验。判定为「需要强制」时，密钥缺失必须 fail-closed。
+ *
+ * - 本地回环地址：视为开发环境，允许在未配密钥时跳过（保证 .dev.vars 未配时的本地体验）；
+ *   但若显式声明 ENVIRONMENT=prod，本地也强制。
+ * - 任何非本地部署（含 Pages 预览域与正式域）：一律强制。
+ *   避免密钥被误删/漏配时，线上人机校验「静默关闭」而无人察觉。
+ */
+function shouldEnforceTurnstile(
+	env: RegisterEnv,
+	requestHost?: string,
+): boolean {
+	if (isLoopbackHost(requestHost)) {
+		const tag = resolveVar(env.ENVIRONMENT, "ENVIRONMENT")?.trim().toLowerCase();
+		return tag === "prod" || tag === "production";
+	}
+	return true;
+}
+
 /**
  * 服务端 siteverify。
- * 未配置 TURNSTILE_SECRET_KEY 时视为未启用（本地 dev 直接放行并告警）；
- * 配置后 token 缺失或校验失败一律拒绝。
+ * - 未配置 TURNSTILE_SECRET_KEY：本地开发跳过并告警；**非本地部署一律拒绝（fail-closed）**；
+ * - 已配置：token 缺失或校验失败一律拒绝；网络故障同样拒绝（绝不放行）。
  */
 export async function verifyTurnstile(
 	env: RegisterEnv,
 	token: string,
 	remoteip: string,
+	requestHost?: string,
 ): Promise<TurnstileResult> {
 	const secret = resolveVar(env.TURNSTILE_SECRET_KEY, "TURNSTILE_SECRET_KEY");
 	if (!secret) {
+		if (shouldEnforceTurnstile(env, requestHost)) {
+			console.error(
+				"[turnstile] 未配置 TURNSTILE_SECRET_KEY，本环境强制人机校验 → 已拒绝本次请求（fail-closed）。" +
+					"请检查 Cloudflare 环境变量是否被清空。",
+			);
+			return {
+				ok: false,
+				message: "人机验证服务暂不可用，请稍后再试",
+			};
+		}
 		console.warn(
-			"[turnstile] TURNSTILE_SECRET_KEY 未配置，跳过人机校验（仅允许开发环境）",
+			"[turnstile] TURNSTILE_SECRET_KEY 未配置，跳过人机校验（本地开发）",
 		);
 		return { ok: true };
 	}

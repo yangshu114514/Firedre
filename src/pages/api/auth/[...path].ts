@@ -125,6 +125,7 @@ export const POST: APIRoute = async ({ params, request }) => {
 						registerEnv,
 						String(body.turnstileToken || ""),
 						getRequestClientIp(request),
+						new URL(request.url).hostname,
 					);
 					if (!turnstile.ok)
 						return json({ message: turnstile.message || "人机验证未通过" }, 403);
@@ -210,6 +211,7 @@ export const POST: APIRoute = async ({ params, request }) => {
 						registerEnv,
 						String(body.turnstileToken || ""),
 						getRequestClientIp(request),
+						new URL(request.url).hostname,
 					);
 					if (!turnstile.ok)
 						return json({ message: turnstile.message || "人机验证未通过" }, 403);
