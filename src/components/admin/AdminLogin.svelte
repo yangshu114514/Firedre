@@ -13,20 +13,13 @@ let { onSuccess = null }: Props = $props();
 let user = $state("");
 let pass = $state("");
 let remember = $state(true);
-let needsSetup = $state(false);
 let error = $state("");
 let loading = $state(false);
 
-onMount(async () => {
+// 管理员无初始化入口：账号只能由站长直接写库，故此处不再查询初始化状态
+onMount(() => {
 	const input = document.querySelector<HTMLInputElement>("#admin-username");
 	input?.focus();
-	try {
-		const resp = await fetch("/api/admin/setup-status/");
-		const data = await resp.json();
-		needsSetup = data.setup === true;
-	} catch {
-		needsSetup = false;
-	}
 });
 
 async function submit(event: SubmitEvent) {
@@ -102,17 +95,11 @@ async function submit(event: SubmitEvent) {
 					<Switch on={remember} label="记住我开关" toggle={() => (remember = !remember)} />
 					<span class="check-text" style="font-size:.85rem">记住登录</span>
 				</label>
-				<a class="lg-link" href="/admin/setup/">忘记密码？</a>
+				<span class="check-text" style="font-size:.85rem;opacity:.6">忘记密码需直接重置数据库中的密码</span>
 			</div>
 			<button type="submit" class="btn btn-primary lg-submit" disabled={loading}>
 				{loading ? "登录中…" : "登 录"}
 			</button>
-			{#if needsSetup}
-				<p class="lg-legal">
-					尚未创建管理员，请
-					<a class="lg-link" href="/admin/setup/">前往初始化</a>
-				</p>
-			{/if}
 		</form>
 	</div>
 </div>

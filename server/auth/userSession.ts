@@ -1,7 +1,7 @@
-import bcrypt from "bcryptjs";
 import type { CloudflareEnv } from "../../types/env";
 import { constantTimeEqual } from "../utils/timingSafe";
 import { loadAdminEnv } from "./loadAdminEnv";
+import { verifyPasswordAllowPlaintext } from "./password";
 
 // 前台用户会话（与后台 admin_session 完全隔离，见 DESIGN-USER-SYSTEM.md B.2）
 // 无状态 HMAC Cookie：base64url({u,exp,role}).base64url(sig)，30 天有效；
@@ -335,25 +335,22 @@ export function validateProfilePatch(patch: {
 	return null;
 }
 
-// ---------- 密码工具（与 admin 同参：bcryptjs $2b$ 10 轮） ----------
-export function isBcryptHash(password: string): boolean {
-	return (
-		(password.startsWith("$2$") ||
-			password.startsWith("$2a$") ||
-			password.startsWith("$2b$") ||
-			password.startsWith("$2y$")) &&
-		password.length === 60
-	);
-}
+// ---------- 密码工具（与 admin 同参：bcryptjs $2b$ 10 轮，实现见 ./password） ----------
+export { hashPassword, isBcryptHash } from "./password";
 
-export async function hashPassword(password: string): Promise<string> {
-	return bcrypt.hash(password, USER_BCRYPT_ROUNDS);
-}
-
+/**
+ * 校验密码。若库里存的是明文（站长手工写库的场景），恒定时间比对通过后，
+ * 只要传入 onUpgrade 就自动回写为 bcrypt 哈希（只升级一次）。
+ */
 export async function verifyPassword(
 	password: string,
 	hash: string,
+	onUpgrade?: (newHash: string) => Promise<void>,
 ): Promise<boolean> {
-	if (!isBcryptHash(hash)) return false;
-	return bcrypt.compare(password, hash);
+	return verifyPasswordAllowPlaintext(
+		password,
+		hash,
+		onUpgrade ?? (async () => {}),
+		USER_BCRYPT_ROUNDS,
+	);
 }

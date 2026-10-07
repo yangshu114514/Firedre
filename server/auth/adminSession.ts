@@ -1,13 +1,14 @@
-import bcrypt from "bcryptjs";
 import type { CloudflareEnv } from "../../types/env";
 import { constantTimeEqual } from "../utils/timingSafe";
 import { getAdminEnvFromProcess, loadAdminEnv } from "./loadAdminEnv";
+import { BCRYPT_ROUNDS, hashPassword, isBcryptHash } from "./password";
+
+// 密码哈希/校验统一在 server/auth/password.ts 实现，此处再导出保持既有引用可用
+export { BCRYPT_ROUNDS, hashPassword, isBcryptHash };
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
 
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 4; // 4 hours
-
-export const BCRYPT_ROUNDS = 10;
 
 export interface AdminAuthEnv {
 	SESSION_SECRET?: string;
@@ -163,19 +164,7 @@ export function resolveAdminEnv(env?: CloudflareEnv): AdminAuthEnv {
 	return getAdminEnvFromProcess();
 }
 
-export function isBcryptHash(password: string): boolean {
-	return (
-		(password.startsWith("$2$") ||
-			password.startsWith("$2a$") ||
-			password.startsWith("$2b$") ||
-			password.startsWith("$2y$")) &&
-		password.length === 60
-	);
-}
-
-export async function hashPassword(password: string): Promise<string> {
-	return bcrypt.hash(password, BCRYPT_ROUNDS);
-}
+// isBcryptHash / hashPassword 见文件顶部再导出（实现位于 server/auth/password.ts）
 
 export async function getAuthenticatedAdminUsername(
 	request: Request,

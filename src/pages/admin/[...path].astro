@@ -8,7 +8,8 @@ import { cfEnv } from "../../lib/api";
 
 import "@/styles/variables.styl";
 
-// 后台门禁：仅管理员或持有后台权限点的用户可进入（/admin/setup/ 为独立页面，不受影响）
+// 后台门禁：仅管理员或持有后台权限点的用户可进入。
+// 已无 /admin/setup/ 之类的免门禁特殊页：管理员账号只能由站长直接写库。
 const actor = await resolveBackendActor(Astro.request, cfEnv);
 if (!actor) {
 	return Astro.redirect(

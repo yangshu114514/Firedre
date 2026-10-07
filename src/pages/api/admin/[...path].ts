@@ -11,8 +11,6 @@ import {
 } from "@server/auth/adminSession";
 import {
 	authenticateAdmin,
-	createAdminUser,
-	hasAdminUser,
 	updateAdminUserPassword,
 } from "@server/auth/adminUser";
 import { resolveBackendActor } from "@server/auth/perms";
@@ -22,7 +20,6 @@ import {
 	getRequestClientIp,
 } from "@server/auth/loginRateLimit";
 import { parseStringListOrEmpty } from "@server/utils/json";
-import { withRateLimit } from "@server/utils/rateLimiter";
 import type { APIRoute } from "astro";
 import type { CloudflareEnv } from "../../../../types/env";
 import {
@@ -58,46 +55,8 @@ export const POST: APIRoute = async ({ params, request }) => {
 	const secure = new URL(request.url).protocol === "https:";
 
 	try {
-		// 首次创建唯一管理员（注册）：仅当系统尚无管理员时允许。
-		if (action === "setup") {
-			return withRateLimit(
-				cfEnv,
-				request,
-				{
-					windowMs: 60_000,
-					maxRequests: 5,
-					scope: "admin-setup",
-					failOpen: false,
-				},
-				async () => {
-					const body = (await request.json().catch(() => null)) as {
-						username?: string;
-						password?: string;
-					} | null;
-					if (!body) return json({ message: "请求体格式错误" }, 400);
-					const username = String(body.username || "").trim();
-					const password = String(body.password || "");
-
-					if (!username || !password)
-						return json({ message: "用户名与密码不能为空" }, 400);
-					if (password.length < 8)
-						return json({ message: "密码至少 8 位" }, 400);
-
-					if (await hasAdminUser(cfEnv.DB))
-						return json({ message: "管理员已存在，无法重复创建" }, 409);
-
-					const result = await createAdminUser(cfEnv.DB, username, password);
-					if (!result.ok)
-						return json({ message: "创建失败或用户名已存在" }, 400);
-
-					// 创建成功后直接登录
-					const token = await createSessionToken(username, adminEnv);
-					return jsonWithHeaders({ ok: true, username }, 200, {
-						"Set-Cookie": buildSessionCookie(token, secure),
-					});
-				},
-			);
-		}
+		// 管理员「注册/初始化」入口已彻底移除：
+		// 管理员账号只能由站长直接写库（admin_users 一行），登录时若检测到明文密码会自动升级为 bcrypt。
 
 		if (action === "login") {
 			const body = (await request.json().catch(() => null)) as {
@@ -184,11 +143,6 @@ export const POST: APIRoute = async ({ params, request }) => {
 export const GET: APIRoute = async ({ params, request }) => {
 	const segments = pathSegments(params);
 	const action = segments[0] || "";
-
-	// 初始化状态：公开查询，供登录页/初始化页判断是否需创建管理员
-	if (action === "setup-status") {
-		return jsonWithHeaders({ setup: !(await hasAdminUser(cfEnv.DB)) });
-	}
 
 	if (action !== "me" && action !== "stats")
 		return json({ message: "Not found" }, 404);

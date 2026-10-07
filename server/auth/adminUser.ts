@@ -1,6 +1,5 @@
-import bcrypt from "bcryptjs";
 import type { CloudflareEnv } from "../../types/env";
-import { hashPassword } from "./adminSession";
+import { hashPassword, verifyPasswordAllowPlaintext } from "./password";
 
 export interface AdminUserRow {
 	id: number;
@@ -25,13 +24,6 @@ export async function getAdminUserByUsername(
 	return row ?? null;
 }
 
-export async function hasAdminUser(db: D1Database): Promise<boolean> {
-	const row = await db
-		.prepare("SELECT COUNT(*) AS c FROM admin_users")
-		.first<{ c: number }>();
-	return Boolean(row && Number(row.c) > 0);
-}
-
 export async function verifyAdminUserCredentials(
 	db: D1Database,
 	username: string,
@@ -40,27 +32,23 @@ export async function verifyAdminUserCredentials(
 	const user = await getAdminUserByUsername(db, username);
 	if (!user) return false;
 	if (user.enabled !== 1) return false;
-	return bcrypt.compare(password, user.password_hash);
+
+	// 兼容站长手工写库时把密码写成明文：比对通过后自动升级为 bcrypt 哈希
+	return verifyPasswordAllowPlaintext(
+		password,
+		user.password_hash,
+		async (hash) => {
+			await db
+				.prepare(
+					"UPDATE admin_users SET password_hash = ?, updated_at = datetime('now') WHERE username = ?",
+				)
+				.bind(hash, user.username)
+				.run();
+		},
+	);
 }
 
-export async function createAdminUser(
-	db: D1Database,
-	username: string,
-	password: string,
-): Promise<{ ok: true } | { ok: false; conflict: boolean }> {
-	const name = String(username || "").trim();
-	if (!name || !password) return { ok: false, conflict: false };
-
-	const hash = await hashPassword(password);
-	const inserted = await db
-		.prepare(
-			"INSERT INTO admin_users (username, password_hash, enabled) VALUES (?, ?, 1) ON CONFLICT DO NOTHING RETURNING id",
-		)
-		.bind(name, hash)
-		.first<{ id: number }>();
-	if (!inserted) return { ok: false, conflict: true };
-	return { ok: true };
-}
+// 管理员不再提供「注册/初始化」入口：账号只能由站长直接写库（见 verifyAdminUserCredentials 的明文兼容）。
 
 export async function updateAdminUserPassword(
 	db: D1Database,

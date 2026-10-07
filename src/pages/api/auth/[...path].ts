@@ -229,7 +229,18 @@ export const POST: APIRoute = async ({ params, request }) => {
 					// 统一失败文案（不区分邮箱不存在/密码错误）
 					if (!user) return json({ message: "邮箱或密码错误" }, 401);
 
-					const valid = await verifyPassword(password, user.password);
+					// 明文兼容：若该账号的密码是手工写库时填的明文，比对通过后自动升级为 bcrypt 哈希
+					const valid = await verifyPassword(
+						password,
+						user.password,
+						async (hash) => {
+							await cfEnv.DB.prepare(
+								"UPDATE users SET password = ? WHERE id = ?",
+							)
+								.bind(hash, user.id)
+								.run();
+						},
+					);
 					if (!valid)
 						return json({ message: "邮箱或密码错误" }, 401);
 
