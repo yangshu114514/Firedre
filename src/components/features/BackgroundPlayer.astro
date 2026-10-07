@@ -2,6 +2,7 @@
 import { Icon } from "astro-icon/components";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
+import { jsonForScript } from "@/utils/csp-json";
 
 export interface Props {
 	playerUrl: string | string[];
@@ -63,7 +64,10 @@ const tLoadError = i18n(I18nKey.videoLoadError);
 	)
 }
 
-<script is:inline data-swup-ignore-script define:vars={{ urls: urlsJson, playerMode, hasMultiple }}>
+<script type="application/json" set:html={jsonForScript({ urls: urlsJson, playerMode, hasMultiple })} />
+<script is:inline data-swup-ignore-script>
+	(function() {
+	const { urls, playerMode, hasMultiple } = JSON.parse(document.currentScript.previousElementSibling.textContent);
 	(() => {
 		var urlList = JSON.parse(urls);
 		if (!urlList.length) return;
@@ -205,6 +209,7 @@ const tLoadError = i18n(I18nKey.videoLoadError);
 			}
 		}
 		document.addEventListener("astro:before-swap", cleanup);
+	})();
 	})();
 </script>
 

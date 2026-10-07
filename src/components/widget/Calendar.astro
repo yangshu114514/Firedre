@@ -5,6 +5,7 @@ import { siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import type { WidgetComponentConfig } from "@/types/config";
+import { jsonForScript } from "@/utils/csp-json";
 import { url } from "@/utils/url-utils";
 
 // 运行时站点配置（后台可编辑；静态 config 为兜底）
@@ -115,8 +116,12 @@ const postUrlPrefix = url("/post/");
   </div>
 </WidgetLayout>
 
-<script is:inline data-swup-ignore-script define:vars={{ monthNames, weekDays, yearText, currentLang, calendarDataUrl, postUrlPrefix, heatmapWeekTemplate }}>
+<script type="application/json" set:html={jsonForScript({ monthNames, weekDays, yearText, currentLang, calendarDataUrl, postUrlPrefix, heatmapWeekTemplate })} />
+<script is:inline data-swup-ignore-script>
+(function() {
+const { monthNames, weekDays, yearText, currentLang, calendarDataUrl, postUrlPrefix, heatmapWeekTemplate } = JSON.parse(document.currentScript.previousElementSibling.textContent);
 window.__fireflyCalendarConfig = { monthNames, weekDays, yearText, currentLang, calendarDataUrl, postUrlPrefix, heatmapWeekTemplate };
+})();
 </script>
 <script>
   import { escapeHtml } from "@/utils/escape-html";

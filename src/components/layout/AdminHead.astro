@@ -1,5 +1,6 @@
 ---
 import FaviconLinks from "./FaviconLinks.astro";
+import { jsonForScript } from "@/utils/csp-json";
 import "@/styles/admin-vditor-nexus.css";
 
 interface Props {
@@ -17,7 +18,10 @@ const settings =
      否则从 /admin/ 直接切到编辑器时主样式缺失 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor@3.11.3/dist/index.css" />
 <style is:inline set:html={`html{--hue:${defaultHue}}`}></style>
-<script is:inline define:vars={{ defaultMode, defaultHue }}>
+<script type="application/json" set:html={jsonForScript({ defaultMode, defaultHue })} />
+<script is:inline>
+	(function() {
+	const { defaultMode, defaultHue } = JSON.parse(document.currentScript.previousElementSibling.textContent);
 	(function () {
 		try {
 			var DARK = "dark", SYSTEM = "system";
@@ -30,5 +34,6 @@ const settings =
 			var hue = localStorage.getItem("hue") || defaultHue;
 			document.documentElement.style.setProperty("--hue", hue);
 		} catch (e) {}
+	})();
 	})();
 </script>

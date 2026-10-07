@@ -6,6 +6,7 @@ import { getPostUrlBySlug } from "@utils/url-utils";
 import PostCard from "@/components/layout/PostCard.astro";
 import { siteConfig } from "@/config";
 import type { PostForList } from "@/utils/post-types";
+import { jsonForScript } from "@/utils/csp-json";
 
 // 运行时站点配置（后台可编辑；静态 config 为兜底）
 
@@ -67,7 +68,10 @@ const coverPositionClass =
   }
 </div>
 
-<script is:inline define:vars={{ defaultLayout, mobileDefaultLayout, columnWidth }}>
+<script type="application/json" set:html={jsonForScript({ defaultLayout, mobileDefaultLayout, columnWidth })} />
+<script is:inline>
+  (function() {
+  const { defaultLayout, mobileDefaultLayout, columnWidth } = JSON.parse(document.currentScript.previousElementSibling.textContent);
   (function() {
     const savedLayout = localStorage.getItem('postListLayout');
     const effectiveDefault = window.innerWidth < 780 ? mobileDefaultLayout : defaultLayout;
@@ -94,6 +98,7 @@ const coverPositionClass =
         container.style.transition = '';
       }
     }
+  })();
   })();
 </script>
 

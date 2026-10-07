@@ -4,6 +4,7 @@ import WidgetLayout from "@/components/common/WidgetLayout.astro";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import type { WidgetComponentConfig } from "@/types/config";
+import { jsonForScript } from "@/utils/csp-json";
 import { url } from "@/utils/url-utils";
 
 export interface Props {
@@ -131,7 +132,10 @@ const useContentPadding = !adConfig.padding;
   </div>
 </WidgetLayout>
 
-<script is:inline data-swup-ignore-script define:vars={{ widgetId, displayCount: adConfig.displayCount ?? -1, isClosable: !!adConfig.closable }}>
+<script type="application/json" set:html={jsonForScript({ widgetId, displayCount: adConfig.displayCount ?? -1, isClosable: !!adConfig.closable })} />
+<script is:inline data-swup-ignore-script>
+  (function() {
+  const { widgetId, displayCount, isClosable } = JSON.parse(document.currentScript.previousElementSibling.textContent);
   function initAd() {
     var widget = document.getElementById(widgetId);
     if (!widget) return;
@@ -180,6 +184,7 @@ const useContentPadding = !adConfig.padding;
       setTimeout(initAd, 100);
     });
   }
+  })();
 </script>
 
 <style>

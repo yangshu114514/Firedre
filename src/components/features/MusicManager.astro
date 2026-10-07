@@ -6,6 +6,7 @@ const settings =
 
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
+import { jsonForScript } from "@/utils/csp-json";
 import { url } from "@/utils/url-utils";
 
 const musicSettings = (settings.music ?? {}) as Record<string, unknown>;
@@ -126,8 +127,12 @@ const managerConfigStr = JSON.stringify({
 });
 ---
 
-<script is:inline data-swup-ignore-script define:vars={{ managerConfigStr }}>
+<script type="application/json" set:html={jsonForScript({ managerConfigStr })} />
+<script is:inline data-swup-ignore-script>
+(function() {
+const { managerConfigStr } = JSON.parse(document.currentScript.previousElementSibling.textContent);
 window.__fireflyMusicConfig = managerConfigStr;
+})();
 </script>
 <script>
 (function () {

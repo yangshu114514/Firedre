@@ -31,6 +31,12 @@ export default defineConfig({
 	// API 驱动的站点：关闭 Origin 校验（会话 Cookie 为 HttpOnly + SameSite=Lax）
 	security: {
 		checkOrigin: false,
+		// 注意：不要启用 security.csp —— 已实测 Astro 7.2.8 在 SSR/adapter 模式下
+		// 完全不注入 CSP：astro/dist/manifest/serialized.js 在序列化 manifest 的返回值里
+		// 硬编码 shouldInjectCspMetaTags: false，而运行时 fetch-state.js 读的正是它。
+		// 只有非序列化路径（core/build/plugins/plugin-manifest.js）才正确赋值。
+		// 结果：配了 csp: true，构建产物里既无 <meta> 也无响应头，纯属误导。
+		// 本站的 CSP 由 src/middleware.ts 手工下发（含全站内联脚本哈希白名单）。
 	},
 
 	// 字体配置 - 只加载实际使用的字体，跳过未引用的以加快构建

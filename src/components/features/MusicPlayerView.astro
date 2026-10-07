@@ -5,6 +5,7 @@ const settings =
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import { resolveShowLyrics } from "@/utils/music-config";
+import { jsonForScript } from "@/utils/csp-json";
 
 // 歌词开关（后台可编辑；静态 config 为兜底）
 const showLyrics = resolveShowLyrics(settings);
@@ -55,8 +56,12 @@ const viewConfigStr = JSON.stringify({
 </div>
 </template>
 
-<script is:inline define:vars={{ viewConfigStr }}>
+<script type="application/json" set:html={jsonForScript({ viewConfigStr })} />
+<script is:inline>
+(function() {
+const { viewConfigStr } = JSON.parse(document.currentScript.previousElementSibling.textContent);
 window.__fireflyMusicViewConfig = viewConfigStr;
+})();
 </script>
 <script>
 (function () {

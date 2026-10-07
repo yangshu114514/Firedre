@@ -6,6 +6,7 @@ import { siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import { getSortedPostsList } from "@/utils/content-utils";
+import { jsonForScript } from "@/utils/csp-json";
 import { getPostUrlBySlug, url } from "@/utils/url-utils";
 
 // 运行时站点配置（后台可编辑；静态 config 为兜底）
@@ -164,7 +165,10 @@ const foldOnFilter = collapseAllButFirst;
   }
 </style>
 
-<script is:inline define:vars={{ i18nStrings, tagsBaseUrl, categoriesBaseUrl }}>
+<script type="application/json" set:html={jsonForScript({ i18nStrings, tagsBaseUrl, categoriesBaseUrl })} />
+<script is:inline>
+  (function() {
+  const { i18nStrings, tagsBaseUrl, categoriesBaseUrl } = JSON.parse(document.currentScript.previousElementSibling.textContent);
   class ArchivePanel extends HTMLElement {
     constructor() {
       super();
@@ -364,4 +368,5 @@ const foldOnFilter = collapseAllButFirst;
   if (!customElements.get("archive-panel")) {
     customElements.define("archive-panel", ArchivePanel);
   }
+  })();
 </script>

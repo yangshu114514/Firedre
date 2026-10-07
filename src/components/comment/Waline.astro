@@ -1,5 +1,6 @@
 ---
 import { getCommentConfig } from "@/config/runtime";
+import { jsonForScript } from "@/utils/csp-json";
 
 // 运行时评论配置（后台可编辑；静态 config 为兜底）
 const comment = getCommentConfig(Astro.locals);
@@ -24,8 +25,11 @@ const config = {
 <div class="relative w-full">
   <div id="waline"></div>
   <link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css" />
-  <script type="module" is:inline define:vars={{ config }}>
+  <script type="application/json" id="waline-config" set:html={jsonForScript(config)} />
+  <script type="module" is:inline>
     import { init } from 'https://unpkg.com/@waline/client@v3/dist/waline.js';
+    (function() {
+    const config = JSON.parse(document.getElementById('waline-config').textContent);
     const rawPath = new URLSearchParams(window.location.search).get("path");
     // 仅接受站内相对路径作为评论线程标识，拒绝外部 scheme/控制字符注入
     const requestedPath = rawPath && /^\/[^\s"'<>]*$/.test(rawPath) ? rawPath : null;
@@ -37,6 +41,7 @@ const config = {
     } catch (error) {
       console.error("[Waline] Failed to initialize:", error);
     }
+    })();
   </script>
 </div>
 

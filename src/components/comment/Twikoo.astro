@@ -1,5 +1,6 @@
 ---
 import { getCommentConfig } from "@/config/runtime";
+import { jsonForScript } from "@/utils/csp-json";
 import { url } from "@/utils/url-utils";
 
 // 运行时评论配置（后台可编辑；静态 config 为兜底）
@@ -27,7 +28,10 @@ const config = {
 
 <div id="tcomment"></div>
 {cssUrl && <link rel="stylesheet" href={cssUrl.startsWith("http") ? cssUrl : url(cssUrl)} />}
-<script is:inline define:vars={{ config, jsUrl }}>
+<script type="application/json" set:html={jsonForScript({ config, jsUrl })} />
+<script is:inline>
+  (function() {
+  const { config, jsUrl } = JSON.parse(document.currentScript.previousElementSibling.textContent);
   // 获取当前页面路径
   function getCurrentPath() {
     // 仅接受站内相对路径作为评论线程标识，拒绝外部 scheme/控制字符注入
@@ -139,4 +143,5 @@ const config = {
       observeComment();
     }
   });
+  })();
 </script>

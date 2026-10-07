@@ -10,6 +10,7 @@ import {
 	getCategoryList,
 	getTagList,
 } from "@/utils/content-utils";
+import { jsonForScript } from "@/utils/csp-json";
 
 interface Props {
 	class?: string;
@@ -146,7 +147,10 @@ const stats = [
   </div>
 </WidgetLayout>
 
-<script is:inline define:vars={{ siteStartDate, lastPostDate, todayText }}>
+<script type="application/json" set:html={jsonForScript({ siteStartDate, lastPostDate, todayText })} />
+<script is:inline>
+  (function() {
+  const { siteStartDate, lastPostDate, todayText } = JSON.parse(document.currentScript.previousElementSibling.textContent);
   function updateDynamicStats() {
     const today = new Date();
 
@@ -194,4 +198,5 @@ const stats = [
       setTimeout(updateDynamicStats, 100);
     });
   }
+  })();
 </script>

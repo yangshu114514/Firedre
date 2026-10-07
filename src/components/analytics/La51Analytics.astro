@@ -1,4 +1,6 @@
 ---
+import { jsonForScript } from "@/utils/csp-json";
+
 interface Props {
 	analyticsId: string;
 	sdkUrl?: string;
@@ -18,7 +20,10 @@ const {
 } = Astro.props;
 ---
 
-<script is:inline data-swup-ignore-script define:vars={{ analyticsId, sdkUrl, ck, autoTrack, hashMode, screenRecord }}>
+<script type="application/json" set:html={jsonForScript({ analyticsId, sdkUrl, ck, autoTrack, hashMode, screenRecord })} />
+<script is:inline data-swup-ignore-script>
+	(function() {
+	const { analyticsId, sdkUrl, ck, autoTrack, hashMode, screenRecord } = JSON.parse(document.currentScript.previousElementSibling.textContent);
 	!(function (p) {
 		"use strict";
 		!(function () {
@@ -46,4 +51,5 @@ const {
 				r.parentNode.insertBefore(n, r);
 		})();
 	})({ id: analyticsId, ck: ck || analyticsId, autoTrack: autoTrack, hashMode: hashMode, screenRecord: screenRecord });
+	})();
 </script>

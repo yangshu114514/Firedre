@@ -2,6 +2,11 @@ import { defineMiddleware } from "astro:middleware";
 import { setPlantumlRuntimeConfig } from "@shared/config/plantumlRuntime";
 import { isSameOriginRequest, originForbiddenResponse } from "@server/utils/csrf";
 import { getPlantumlConfig } from "./config/runtime";
+import { CSP_SCRIPT_HASHES } from "./generated/csp-hashes";
+
+// 内联脚本白名单（全站并集）：swup 软导航会把别的页面的内联脚本拿到当前文档执行，
+// 因此白名单必须是全站并集，只放当前页的哈希会在软导航后被拦。
+const SCRIPT_HASH_SOURCES = CSP_SCRIPT_HASHES.map((h) => `'${h}'`).join(" ");
 
 export interface SettingsLocals {
 	settings: import("@server/settings/service").SettingsView;
@@ -34,14 +39,29 @@ function applySecurityHeaders(headers: Headers) {
 	// （控制台唯一的 eval 违规来自 Cloudflare Turnstile 自己的 iframe，由其自身 CSP 管辖，
 	//  详情里 isReportOnly:false 且 url 为 challenges.cloudflare.com，与本头无关）。
 	//
-	// 仍保留 'unsafe-inline' 'unsafe-eval'：本站有 36 个内联脚本（主题初始化、swup、音乐播放器等），
-	// 且 Astro 的 CSP 能力只支持哈希、不支持 nonce，去掉这两项需把全部内联脚本迁到构建期哈希。
-	// 因此本 CSP 目前防的是：base 标签劫持、表单劫持、点劫持（frame-ancestors）、
-	// 插件/对象注入（object-src）、以及资源外联范围；**尚不能拦内联脚本注入**——
-	// 该风险已由 server/posts/sanitize.ts 的消毒器覆盖。
+	// script-src 已移除 'unsafe-inline'，改为「全站内联脚本 sha256 并集白名单」：
+	// 本站 36 个内联脚本（主题初始化、swup、音乐播放器等）无法用 Astro 原生 CSP，
+	// 因为 astro/dist/manifest/serialized.js 在序列化 manifest 里硬编码
+	// shouldInjectCspMetaTags: false，SSR 路径根本不会注入 CSP（上游 bug）。
+	// 另注：nonce 方案在本站不可行——swup 软导航会把新页面 HTML 里的内联脚本重新执行，
+	// 而文档级 CSP 只认首个响应的 nonce/hash，换页后必然被拦。
+	//
+	// 白名单由 scripts/collect-csp-hashes.mjs 扫描全站生成（见 src/generated/csp-hashes.ts），
+	// 入口是 `pnpm build:csp`（两遍构建：构建 → 起本地预览扫描 → 再构建）。
+	// 部署后可用 scripts/verify-csp-hashes.mjs 复验线上页面是否全部覆盖。
+	// script-src-attr 'unsafe-inline' 是**刻意保留**的折中：
+	// 内联事件处理器属性（onclick/onload...）无法用 hash 覆盖——CSP 规范要求 'unsafe-hashes'
+	// 且必须给每个 handler 单独加哈希，而 handler 内容随模板变化；更关键的是 Svelte 5 在 SSR
+	// 时会把事件绑定输出成 `onload="this.__e=event"` 之类的占位属性，属框架行为、无法从模板消除。
+	// 实测 /bilibili/ 单页有 32 个此类 handler，拦掉会导致返回顶部、悬浮 TOC、公告关闭、
+	// 以及所有 Svelte 组件的事件水合集体失效。
+	// 拆成两条指令后：<script> 元素注入被 hash 白名单彻底封堵（这是主要 XSS 面），
+	// 仅属性式 handler 放行。若要进一步收紧，需把 Astro 模板里的 onclick 全量改为
+	// addEventListener，并接受 Svelte SSR 占位属性仍会被拦。
+	// 'unsafe-eval' 暂留：待确认无第三方依赖后再收。
 	headers.set(
 		"Content-Security-Policy",
-		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' blob: https://challenges.cloudflare.com; child-src 'self' blob: https://challenges.cloudflare.com; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+		`default-src 'self'; script-src 'self' ${SCRIPT_HASH_SOURCES} 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' blob: https://challenges.cloudflare.com; child-src 'self' blob: https://challenges.cloudflare.com; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'`,
 	);
 }
 

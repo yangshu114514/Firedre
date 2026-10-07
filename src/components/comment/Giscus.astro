@@ -3,6 +3,7 @@ const settings =
 	(Astro.locals as { settings?: Record<string, unknown> }).settings ?? {};
 
 import { commentConfig } from "@/config";
+import { jsonForScript } from "@/utils/csp-json";
 
 const commentSettings = (settings.comment ?? {}) as Record<string, unknown>;
 
@@ -45,7 +46,10 @@ const darkTheme = "dark";
   loading={giscus.loading}
 />
 
-<script is:inline define:vars={{ lightTheme, darkTheme }}>
+<script type="application/json" set:html={jsonForScript({ lightTheme, darkTheme })} />
+<script is:inline>
+  (function() {
+  const { lightTheme, darkTheme } = JSON.parse(document.currentScript.previousElementSibling.textContent);
   // 仅接受站内相对路径作为评论线程标识，拒绝外部 scheme/控制字符注入
   const rawPath = new URLSearchParams(window.location.search).get("path");
   const requestedPath =
@@ -81,4 +85,5 @@ const darkTheme = "dark";
   });
 
   window.giscusThemeObserver.observe(document.documentElement, { attributes: true });
+  })();
 </script>

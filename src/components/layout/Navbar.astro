@@ -21,6 +21,7 @@ import type { NavBarLink } from "@/types/config";
 import { isHomePage } from "@/utils/layout-utils";
 import { resolveNavMenuLinks } from "@/utils/nav-menu-utils";
 import { url } from "@/utils/url-utils";
+import { jsonForScript } from "@/utils/csp-json";
 import DropdownMenu from "./DropdownMenu.astro";
 
 const wallpaperConfig = getWallpaperConfig(Astro.locals);
@@ -128,11 +129,14 @@ const logoVariants = await Promise.all(
 );
 ---
 <div id="navbar" class="z-50" style={`--navbar-glass-blur: ${navbarBlur}px;`} data-transparent-mode={navbarTransparentMode} data-is-home={isHomePageCheck} data-full-width={navbarWidthFull}>
-    <script is:inline define:vars={{
+    <script type="application/json" set:html={jsonForScript({
       bannerTMode: wallpaperConfig.banner?.navbar?.transparentMode || "semi",
       bannerBlur: wallpaperConfig.banner?.navbar?.blur ?? 20,
       fsDynamic: wallpaperConfig.fullscreen?.navbar?.dynamicTransparent ?? false,
-    }}>
+    })} />
+    <script is:inline>
+      (function() {
+      const { bannerTMode, bannerBlur, fsDynamic } = JSON.parse(document.currentScript.previousElementSibling.textContent);
 
       (function () {
         const wm = document.documentElement.getAttribute("data-wallpaper-mode");
@@ -153,6 +157,7 @@ const logoVariants = await Promise.all(
         }
         navbar.setAttribute("data-transparent-mode", mode);
         navbar.style.setProperty("--navbar-glass-blur", `${blur}px`);
+      })();
       })();
     </script>
     <div class:list={[

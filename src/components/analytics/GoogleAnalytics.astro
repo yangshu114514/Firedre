@@ -1,4 +1,6 @@
 ---
+import { jsonForScript } from "@/utils/csp-json";
+
 interface Props {
 	analyticsId: string;
 }
@@ -7,7 +9,11 @@ const { analyticsId } = Astro.props;
 ---
 
 <script is:inline data-swup-ignore-script async src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}></script>
-<script is:inline data-swup-ignore-script define:vars={{analyticsId}}>window.dataLayer = window.dataLayer || [];
+<script type="application/json" set:html={jsonForScript({ analyticsId })} />
+<script is:inline data-swup-ignore-script>
+(function() {
+const { analyticsId } = JSON.parse(document.currentScript.previousElementSibling.textContent);
+window.dataLayer = window.dataLayer || [];
 
 function gtag() {
     dataLayer.push(arguments);
@@ -15,4 +21,5 @@ function gtag() {
 
 gtag('js', new Date());
 gtag('config', analyticsId);
+})();
 </script>

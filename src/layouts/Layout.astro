@@ -32,6 +32,7 @@ import {
 	PAGE_WIDTH,
 } from "@/constants/constants";
 import { toClientSettings } from "@/utils/client-settings";
+import { jsonForScript } from "@/utils/csp-json";
 import { isHomePage } from "@/utils/layout-utils";
 import {
 	getAuthorAvatarUrl,
@@ -338,16 +339,14 @@ const socialImage =
 
     {imageOptimization?.noReferrerDomains &&
      imageOptimization.noReferrerDomains.length > 0 && (
+      <>
       <script
-        is:inline
-        define:vars={{
-          noReferrerDomains: JSON.stringify(
-            imageOptimization.noReferrerDomains
-          ),
-        }}
-      >
+        type="application/json"
+        set:html={jsonForScript(imageOptimization.noReferrerDomains)}
+      />
+      <script is:inline>
         (function() {
-          const domains = JSON.parse(noReferrerDomains);
+          const domains = JSON.parse(document.currentScript.previousElementSibling.textContent);
 
           function matchesDomain(urlStr, patterns) {
             try {
@@ -395,17 +394,21 @@ const socialImage =
           });
         })();
       </script>
+      </>
     )}
 
     {/* i18n 词典内联：外置端点需额外一次请求（实测 0.82–1.07s / 12.6KB），
         内联后无需网络往返，且保证 island 水合前词典就绪（消除执行顺序竞态） */}
     <script is:inline set:html={`window.__FIREDRE_I18N__ = ${JSON.stringify(currentI18n)};`} />
     {allPostMeta.length > 0 && (
-      <script is:inline set:html={`window.__allPostMetaCache = ${JSON.stringify(allPostMeta)};`} />
+      <>
+        <script type="application/json" set:html={jsonForScript(allPostMeta)} />
+        <script is:inline>window.__allPostMetaCache = JSON.parse(document.currentScript.previousElementSibling.textContent);</script>
+      </>
     )}
     <script
-      is:inline
-      define:vars={{
+      type="application/json"
+      set:html={jsonForScript({
         PAGE_WIDTH,
         configHue,
         settingsVersion: (Astro.locals as { settingsVersion?: string }).settingsVersion ?? "",
@@ -418,8 +421,18 @@ const socialImage =
         baseUrl: import.meta.env.BASE_URL,
         cardTransparentOpacity: ((settings?.["theme"])?.["overlayCardOpacity"] ?? settings?.["theme"]?.["overlay"]?.cardOpacity ?? backgroundWallpaper.overlay?.cardOpacity) ?? 0.6,
         cardRadius: (settings?.["cardRadius"] ?? siteConfig.card?.radius) ?? 1,
-      }}
-    >
+      })}
+    />
+    <script is:inline>
+      // 必须包 IIFE：Astro 对 is:inline define:vars 的脚本会自动包一层 IIFE 来隔离
+      // 注入的变量；改成从 JSON 块取数后丢掉了这层包装，顶层 const 会在 swup 重执行
+      // 或同页多次渲染时冲突（SyntaxError: Identifier 'xxx' has already been declared）。
+      (function() {
+      const {
+        PAGE_WIDTH, configHue, settingsVersion, defaultMode, defaultWallpaperMode,
+        isWallpaperSwitchable, darkTheme, lightTheme, baseUrl,
+        cardTransparentOpacity, cardRadius,
+      } = JSON.parse(document.currentScript.previousElementSibling.textContent);
       // 主题初始化 - 与setting-utils.ts保持一致
       const LIGHT_MODE = "light";
       const DARK_MODE = "dark";
@@ -536,6 +549,7 @@ const socialImage =
           document.documentElement.setAttribute("data-banner-title-enabled", bannerTitleEnabled);
         }
       })();
+      })();
     </script>
     <style
       define:vars={{
@@ -584,10 +598,16 @@ const socialImage =
     <div id="progress-bar"></div>
 
     {                                 }
-    <script is:inline define:vars={{
-      defaultBorder: (settings?.["card"] ?? siteConfig.card)?.border ?? false,
-      defaultFollowTheme: (settings?.["card"] ?? siteConfig.card)?.followTheme ?? false,
-    }}>
+    <script
+      type="application/json"
+      set:html={jsonForScript({
+        defaultBorder: (settings?.["card"] ?? siteConfig.card)?.border ?? false,
+        defaultFollowTheme: (settings?.["card"] ?? siteConfig.card)?.followTheme ?? false,
+      })}
+    />
+    <script is:inline>
+      (function() {
+      const { defaultBorder, defaultFollowTheme } = JSON.parse(document.currentScript.previousElementSibling.textContent);
       (function() {
         var stored = localStorage.getItem("cardBorderEnabled");
         var border = stored !== null ? stored === "true" : defaultBorder;
@@ -598,6 +618,7 @@ const socialImage =
         var follow = stored !== null ? stored === "true" : defaultFollowTheme;
         if (follow) document.body.classList.add("card-follow-theme-hue");
         else document.body.classList.remove("card-follow-theme-hue");
+      })();
       })();
     </script>
 
@@ -610,9 +631,10 @@ const socialImage =
       <MusicPlayerView />
     )}
 
-    <script is:inline define:vars={{ fireflySettings: toClientSettings(settings) }}>
+    <script type="application/json" set:html={jsonForScript(toClientSettings(settings))} />
+    <script is:inline>
       // 后台站点设置注入客户端（樱花等客户端组件的开关/参数读取）
-      window.__FIREFLY_SETTINGS__ = fireflySettings;
+      window.__FIREFLY_SETTINGS__ = JSON.parse(document.currentScript.previousElementSibling.textContent);
     </script>
     {settings.effects?.sakura !== false && <SakuraEffect />}
 
