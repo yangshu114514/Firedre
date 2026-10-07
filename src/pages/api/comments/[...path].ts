@@ -25,6 +25,7 @@ import {
 	cfEnv,
 	fromServiceError,
 	json,
+	jsonAuthVariant,
 	methodNotAllowed,
 	notFound,
 	unauthorized,
@@ -68,8 +69,8 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 			pageSize: Number(url.searchParams.get("pageSize") || COMMENT_PAGE_SIZE),
 			viewerId: me?.id ?? null,
 		});
-		// 含登录态判断的响应不能被共享缓存
-		return json(result, 200, me ? "private" : "default");
+		// 响应含登录态（可见自己的 pending）→ 统一策略：登录 private，匿名带 Vary: Cookie
+		return jsonAuthVariant(result, Boolean(me));
 	} catch (error) {
 		return fromServiceError(error);
 	}

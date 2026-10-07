@@ -269,41 +269,8 @@ export async function getAuthUser(
 }
 
 // ---------- CSRF：写 API Origin 校验（设计 G.3） ----------
-
-/**
- * 写请求（POST/PUT/PATCH/DELETE）同源校验：
- * - 带 Origin → 必须与请求 URL 同源
- * - 不带 Origin → 看 Sec-Fetch-Site（浏览器跨站必带其一）；两者皆无视为非浏览器客户端，放行
- * 读方法直接放行。
- */
-export function isSameOriginRequest(request: Request): boolean {
-	const method = request.method.toUpperCase();
-	if (method === "GET" || method === "HEAD" || method === "OPTIONS") return true;
-
-	const origin = request.headers.get("Origin");
-	if (origin && origin !== "null") {
-		try {
-			return new URL(origin).origin === new URL(request.url).origin;
-		} catch {
-			return false;
-		}
-	}
-
-	const site = request.headers.get("Sec-Fetch-Site");
-	if (site && site !== "same-origin" && site !== "none") return false;
-
-	return true;
-}
-
-export function originForbiddenResponse() {
-	return new Response(JSON.stringify({ message: "跨站请求被拒绝" }), {
-		status: 403,
-		headers: {
-			"Content-Type": "application/json; charset=utf-8",
-			"Cache-Control": "no-store",
-		},
-	});
-}
+// 实现已抽到 server/utils/csrf.ts（便于中间件集中调用），此处再导出保持既有引用可用。
+export { isSameOriginRequest, originForbiddenResponse } from "../utils/csrf";
 
 // ---------- 个人资料校验（profile 更新用） ----------
 

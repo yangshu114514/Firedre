@@ -1,5 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { setPlantumlRuntimeConfig } from "@shared/config/plantumlRuntime";
+import { isSameOriginRequest, originForbiddenResponse } from "@server/utils/csrf";
 import { getPlantumlConfig } from "./config/runtime";
 
 export interface SettingsLocals {
@@ -28,12 +29,19 @@ function applySecurityHeaders(headers: Headers) {
 		"Permissions-Policy",
 		"camera=(), microphone=(), geolocation=(), payment=()",
 	);
+	// ── CSP（已转强制）──
+	// 转强制前已实测：首页 / 文章页 / 登录页 / 归档页 对下列指令**零违规**
+	// （控制台唯一的 eval 违规来自 Cloudflare Turnstile 自己的 iframe，由其自身 CSP 管辖，
+	//  详情里 isReportOnly:false 且 url 为 challenges.cloudflare.com，与本头无关）。
+	//
+	// 仍保留 'unsafe-inline' 'unsafe-eval'：本站有 36 个内联脚本（主题初始化、swup、音乐播放器等），
+	// 且 Astro 的 CSP 能力只支持哈希、不支持 nonce，去掉这两项需把全部内联脚本迁到构建期哈希。
+	// 因此本 CSP 目前防的是：base 标签劫持、表单劫持、点劫持（frame-ancestors）、
+	// 插件/对象注入（object-src）、以及资源外联范围；**尚不能拦内联脚本注入**——
+	// 该风险已由 server/posts/sanitize.ts 的消毒器覆盖。
 	headers.set(
-		"Content-Security-Policy-Report-Only",
-		// Turnstile（login/register）需要 challenges.cloudflare.com 的脚本与 iframe：
-		// 未声明时 frame-src 回退 default-src 'self'，会在报告里持续报违规；
-		// 一旦该头切为强制（去掉 -Report-Only）将直接挡掉人机验证。
-		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' blob: https://challenges.cloudflare.com; child-src 'self' blob: https://challenges.cloudflare.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+		"Content-Security-Policy",
+		"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' blob: https://challenges.cloudflare.com; child-src 'self' blob: https://challenges.cloudflare.com; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
 	);
 }
 
@@ -65,6 +73,18 @@ function derivePages(merged: Record<string, unknown>): void {
 export const onRequest = defineMiddleware(async (context, next) => {
 	const { request } = context;
 	const url = new URL(request.url);
+
+	// ── CSRF 纵深防御（集中拦截，自动覆盖所有现有与将来新增的写接口）──
+	// 第一道防线是会话 Cookie 的 SameSite=Lax（跨站非安全方法不携带 Cookie）；
+	// 这里对非安全方法的 /api 请求再做一次显式同源校验，避免将来 Cookie 策略放宽、
+	// 或出现不依赖 Cookie 的写接口时被跨站调用。
+	// 放在最前面：命中即短路，省去后续设置加载与渲染开销。
+	// 媒体域路由（/covers /music /misc）不在 /api 前缀下且均为 GET，不受影响。
+	if (url.pathname.startsWith("/api/") && !isSameOriginRequest(request)) {
+		const blocked = originForbiddenResponse();
+		applySecurityHeaders(blocked.headers);
+		return blocked;
+	}
 
 	// 用户系统缓存排除（设计 G.2）：
 	// ①请求带 user_session Cookie → 跳过 caches.default（缓存 key 不含 Cookie，命中会把登录态页面发给访客）

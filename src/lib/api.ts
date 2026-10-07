@@ -65,6 +65,22 @@ export function fromServiceError(error: unknown) {
 	return serverError(error);
 }
 
+/**
+ * 登录态相关响应的统一缓存策略。
+ *
+ * - 已登录：`private, no-store`，绝不落入任何共享缓存；
+ * - 匿名：可公共缓存（省 D1 查询），但**必须声明 `Vary: Cookie`**。
+ *
+ * 为什么要 Vary：边缘缓存默认不按 Cookie 分片。若匿名响应可缓存却不声明 Vary，
+ * 已登录用户可能命中缓存的匿名版本——表现为点赞状态退化成未赞、
+ * 看不到自己刚提交的待审评论。声明 Vary 后两种登录态各自独立缓存。
+ */
+export function jsonAuthVariant(data: unknown, authenticated: boolean) {
+	const response = json(data, 200, authenticated ? "private" : "default");
+	if (!authenticated) response.headers.set("Vary", "Cookie");
+	return response;
+}
+
 // 写路径通用样板：统一后台身份鉴权（传统 admin 会话或 users.admin）+ 统一错误映射
 export function withAdmin(
 	handler: (context: APIContext) => Promise<Response>,

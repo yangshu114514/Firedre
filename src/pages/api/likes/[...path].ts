@@ -14,6 +14,7 @@ import {
 	cfEnv,
 	fromServiceError,
 	json,
+	jsonAuthVariant,
 	methodNotAllowed,
 	notFound,
 } from "../../../lib/api";
@@ -34,13 +35,13 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 
 		const me = await getAuthUser(request, cfEnv);
 		const state = await getLikeState(cfEnv.DB, slug, me?.id ?? null);
-		return json(
+		// 响应含登录态（liked / authenticated）→ 走统一策略：登录 private，匿名带 Vary: Cookie
+		return jsonAuthVariant(
 			{
 				...state,
 				authenticated: Boolean(me),
 			},
-			200,
-			me ? "private" : "default",
+			Boolean(me),
 		);
 	} catch (error) {
 		return fromServiceError(error);
