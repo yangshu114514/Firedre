@@ -145,6 +145,7 @@ async function resend() {
 				</button>
 				<a
 					href="/login/"
+					data-no-swup
 					class="block w-full rounded-xl bg-(--primary) px-6 py-2.5 text-sm font-semibold text-white text-center transition-all hover:bg-(--primary)/90"
 				>
 					去登录
@@ -259,7 +260,7 @@ async function resend() {
 
 		<p class="text-center text-sm text-50 mt-6">
 			已有账号？
-			<a href="/login/" class="text-(--primary) font-medium hover:underline">直接登录</a>
+			<a href="/login/" data-no-swup class="text-(--primary) font-medium hover:underline">直接登录</a>
 		</p>
 	{/if}
 </div>

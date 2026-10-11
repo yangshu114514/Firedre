@@ -85,6 +85,7 @@ const msg = messages[state];
 			<div class="mt-6 space-y-3">
 				<a
 					href={alreadyLoggedIn ? "/profile/" : "/login/"}
+					data-no-swup
 					class="block w-full rounded-xl bg-(--primary) px-6 py-2.5 text-sm font-semibold text-white text-center transition-all hover:bg-(--primary)/90"
 				>
 					{alreadyLoggedIn ? "返回个人资料" : "去登录"}

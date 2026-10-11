@@ -157,7 +157,7 @@ export function getMusicConfig(locals: unknown): MusicPlayerConfig {
 			),
 			server: str(m.metingServer, "netease"),
 			type: str(m.metingType, "playlist"),
-			id: str(m.metingId, "10046455237"),
+			id: str(m.metingId, ""),
 			auth: str(m.metingAuth, ""),
 			fallbackApis: arr(m.metingFallbackApis, []).map(String),
 		},
@@ -361,7 +361,7 @@ export function getAnnouncementConfig(locals: unknown): AnnouncementConfig {
 		enable: bool(a.enabled, undefined as unknown as boolean),
 		closable: bool(a.closable, true),
 		title: str(a.title, ""),
-		content: str(a.content, "欢迎来到我的博客！这是一则示例公告。"),
+		content: str(a.content, ""),
 		...(Array.isArray(a.sections) && a.sections.length
 			? { sections: a.sections }
 			: {}),

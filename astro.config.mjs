@@ -120,6 +120,7 @@ export default defineConfig({
 					"article",
 					"article-outline",
 					"auto-stories-outline-rounded",
+					"dashboard-outline",
 					"book-2-outline-rounded",
 					"bookmark-rounded",
 					"bookmarks",

@@ -22,12 +22,25 @@ import { isHomePage } from "@/utils/layout-utils";
 import { resolveNavMenuLinks } from "@/utils/nav-menu-utils";
 import { url } from "@/utils/url-utils";
 import { jsonForScript } from "@/utils/csp-json";
+import { getAuthUser } from "@server/auth/userSession";
+import { getAuthenticatedAdminUsername } from "@server/auth/adminSession";
+import type { CloudflareEnv } from "../../../types/env";
 import DropdownMenu from "./DropdownMenu.astro";
 
 const wallpaperConfig = getWallpaperConfig(Astro.locals);
 const navbarConfig = getNavbarConfig(Astro.locals);
 const siteConfigRuntime = getSiteConfig(Astro.locals);
 const panelConfig = getPanelConfig(Astro.locals);
+
+// 登录态 SSR 直出（导航栏不在 swup 容器内，登录/退出均整页跳转，状态一致）。
+// 匿名请求两个函数都在 Cookie 处短路，零额外查询。
+const runtimeEnv = (Astro.locals as { runtime?: { env?: CloudflareEnv } }).runtime?.env;
+const authUser = runtimeEnv ? await getAuthUser(Astro.request, runtimeEnv) : null;
+const adminUsername = runtimeEnv
+	? await getAuthenticatedAdminUsername(Astro.request, runtimeEnv)
+	: null;
+// 醒目控制台入口：管理员会话（admin_users）或用户系统 role=admin
+const isStaff = Boolean(adminUsername) || authUser?.role === "admin";
 
 const musicConfigRuntime = getMusicConfig(Astro.locals);
 
@@ -233,14 +246,28 @@ const logoVariants = await Promise.all(
                 )}
                 {                }
                 <LightDarkSwitch client:load></LightDarkSwitch>
-                <a
-                  href={url("/login/")}
-                  aria-label="登录 / 注册"
-                  title="登录 / 注册"
-                  class="btn-plain scale-animation rounded-lg h-[44px] w-[44px] active:scale-90"
-                >
-                  <Icon name="material-symbols:person" class="text-[1.25rem]" />
-                </a>
+                {isStaff ? (
+                  <a
+                    href={url("/admin/")}
+                    data-no-swup
+                    aria-label="管理控制台"
+                    title="管理控制台"
+                    class="scale-animation rounded-lg h-[44px] px-3 flex items-center justify-center gap-1.5 bg-(--primary) text-white dark:text-black/70 font-bold active:scale-90"
+                  >
+                    <Icon name="material-symbols:dashboard-outline" class="text-[1.25rem]" />
+                    <span class="text-sm hidden xl:inline">控制台</span>
+                  </a>
+                ) : (
+                  <a
+                    href={url(authUser ? "/profile/" : "/login/")}
+                    data-no-swup
+                    aria-label={authUser ? "个人中心" : "登录 / 注册"}
+                    title={authUser ? "个人中心" : "登录 / 注册"}
+                    class="btn-plain scale-animation rounded-lg h-[44px] w-[44px] active:scale-90"
+                  >
+                    <Icon name="material-symbols:person" class="text-[1.25rem]" />
+                  </a>
+                )}
                 <button aria-label="Menu" aria-controls="nav-menu-panel" aria-expanded="false" name="Nav Menu" class="btn-plain scale-animation rounded-lg h-[44px] w-[44px] active:scale-90 lg:hidden!" id="nav-menu-switch">
                     <Icon name="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
                 </button>
