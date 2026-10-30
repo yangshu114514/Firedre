@@ -220,6 +220,7 @@ onMountAsync(async () => {
 							<div class="a2fg">
 								{#each group.fields.filter((f) => isFieldVisible(f, cmtTypeVal) && f.type !== "boolean") as field (field.name)}
 									<div class="a2f {field.wide ? 'w' : ''} {profileArea(group, field)}">
+										<!-- svelte-ignore a11y_label_has_associated_control —— 控件已有 aria-label -->
 										<label>{field.label}{#if field.hint}<small>{field.hint}</small>{/if}</label>
 										{#if field.type === "select"}
 											<select aria-label={field.label} onchange={(e) => { const v = e.currentTarget.value; data[group.key][field.name] = v; cmtTypeVal = v; markDirty(); }}>

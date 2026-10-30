@@ -56,18 +56,6 @@ export function getSiteConfig(locals: unknown): SiteConfig {
 				"system",
 			) as SiteConfig["themeColor"]["defaultMode"],
 		},
-		pages: {
-			friends: bool(s.pageFriends, true),
-			guestbook: bool(s.pageGuestbook, true),
-			dynamic: bool(s.pageDynamic, true),
-			gallery: bool(s.pageGallery, true),
-			booknav: bool(s.pageBooknav, true),
-			bilibili: bool(s.pageBilibili, true),
-			bangumi: bool(s.pageBangumi, false),
-			vndb: bool(s.pageVndb, false),
-			mal: bool(s.pageMal, true),
-			sponsor: bool(s.pageSponsor, true),
-		},
 		foldArticle: bool(basic.foldArticle, true),
 		postListLayout: {
 			...(basic.postListLayout as SiteConfig["postListLayout"]),

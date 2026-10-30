@@ -87,14 +87,17 @@ let preview = $derived.by(() => {
 	<div
 		class="je-mask"
 		onclick={() => (open = false)}
+		onkeydown={(e) => { if (e.key === "Escape") open = false; }}
 		role="presentation"
 	>
 		<div
 			class="je-modal"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="je-title"
+			tabindex="-1"
 		>
 			<header class="je-hd">
 				<strong id="je-title">{fieldLabel}</strong>

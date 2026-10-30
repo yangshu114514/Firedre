@@ -137,6 +137,7 @@ const SECTION_TITLES: Record<string, string> = {
 	gallery: "相册管理",
 	"album-edit": "编辑相册",
 	settings: "站点设置",
+	"perm-requests": "权限审批",
 };
 const SECTION_GROUPS: Record<string, string> = {
 	dashboard: "内容管理",
@@ -155,6 +156,7 @@ const SECTION_GROUPS: Record<string, string> = {
 	gallery: "站点模块",
 	"album-edit": "站点模块",
 	settings: "系统",
+	"perm-requests": "权限",
 };
 
 const ICONS: Record<string, string> = {

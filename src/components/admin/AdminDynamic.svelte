@@ -306,7 +306,4 @@ onMountAsync(async () => {
 
 
 
-	.check-line input {
-		accent-color: var(--primary);
-	}
 </style>

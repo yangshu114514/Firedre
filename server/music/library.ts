@@ -176,7 +176,9 @@ export async function createGroup(
 	)
 		.bind(trimmed)
 		.run();
-	return { id: Number(res.meta.last_row_id) };
+	const lastRowId = res.meta?.last_row_id;
+	if (!lastRowId) throw new UserError("分组创建失败");
+	return { id: Number(lastRowId) };
 }
 
 export async function renameGroup(
@@ -189,7 +191,7 @@ export async function renameGroup(
 	const res = await env.DB.prepare("UPDATE music_groups SET name = ? WHERE id = ?")
 		.bind(trimmed, id)
 		.run();
-	if (!res.meta.changes) throw new UserError("分组不存在");
+	if (!res.meta?.changes) throw new UserError("分组不存在");
 }
 
 export async function deleteGroup(env: { DB: D1Database }, id: number): Promise<void> {

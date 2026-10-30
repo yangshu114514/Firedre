@@ -55,15 +55,22 @@ function contentTypeFor(key: string, fallback?: string): string {
 	return EXT_CONTENT_TYPE[ext] ?? "application/octet-stream";
 }
 
-function parseRange(header: string): R2Range | null {
+// 自建判别式结构：R2Range 是联合类型，直接读 offset/length/suffix 会因
+// “该分支没有这个字段”报 TS2339；同时它只在 workers 类型上下文存在。
+// 这里用纯数值结构解析，传给 R2 时再拼成它接受的两种字面量形状。
+type MediaRange =
+	| { kind: "offset"; offset: number; length?: number }
+	| { kind: "suffix"; suffix: number };
+
+function parseRange(header: string): MediaRange | null {
 	const m = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
 	if (!m) return null;
-	if (m[1] === "" && m[2] !== "") return { suffix: Number(m[2]) };
-	if (m[2] === "") return { offset: Number(m[1]) };
+	if (m[1] === "" && m[2] !== "") return { kind: "suffix", suffix: Number(m[2]) };
+	if (m[2] === "") return { kind: "offset", offset: Number(m[1]) };
 	const start = Number(m[1]);
 	const end = Number(m[2]);
 	if (end < start) return null;
-	return { offset: start, length: end - start + 1 };
+	return { kind: "offset", offset: start, length: end - start + 1 };
 }
 
 /**
@@ -123,7 +130,15 @@ export async function serveMedia(
 	let object: R2ObjectBody | null = null;
 	if (range) {
 		try {
-			object = await env.BUCKET.get(key, { range });
+			object =
+				range.kind === "suffix"
+					? await env.BUCKET.get(key, { range: { suffix: range.suffix } })
+					: await env.BUCKET.get(key, {
+							range:
+								range.length === undefined
+									? { offset: range.offset }
+									: { offset: range.offset, length: range.length },
+						});
 		} catch {
 			return new Response("Range Not Satisfiable", { status: 416 });
 		}
@@ -134,9 +149,12 @@ export async function serveMedia(
 
 	const headers = new Headers();
 	object.writeHttpMetadata(headers);
+	const metaContentType = (
+		object.httpMetadata as { contentType?: string } | undefined
+	)?.contentType;
 	headers.set(
 		"Content-Type",
-		contentTypeFor(key, object.httpMetadata?.contentType),
+		contentTypeFor(key, metaContentType),
 	);
 	headers.set("Cache-Control", IMMUTABLE);
 	headers.set("Accept-Ranges", "bytes");
@@ -147,14 +165,14 @@ export async function serveMedia(
 	if (range) {
 		let start: number;
 		let length: number;
-		if (range.offset !== undefined) {
+		if (range.kind === "offset") {
 			start = range.offset;
 			length = range.length ?? Math.max(0, object.size - start);
 		} else {
-			length = range.suffix ?? 0;
+			length = Math.min(range.suffix, object.size);
 			start = Math.max(0, object.size - length);
 		}
-		if (start >= object.size && object.size > 0) {
+		if (length <= 0 || (start >= object.size && object.size > 0)) {
 			try {
 				object.body?.cancel();
 			} catch {

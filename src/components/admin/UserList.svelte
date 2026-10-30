@@ -13,6 +13,7 @@ type UserItem = {
 	avatar: string;
 	email_verified: number;
 	banned: number;
+	role: string;
 	created_at: string;
 	oauth_count: number;
 	comment_count: number;
@@ -146,6 +147,9 @@ onMount(() => load(1));
 							{#if user.banned === 1}
 								<span class="u-chip lock">已封禁</span>
 							{/if}
+							{#if user.role === "admin"}
+								<span class="u-chip ok">管理员</span>
+							{/if}
 						</div>
 						<div class="list-sub">
 							<span class="mono">{user.email}</span>
@@ -157,7 +161,11 @@ onMount(() => load(1));
 						</div>
 					</div>
 					<div class="list-actions">
-						{#if user.banned === 1}
+						{#if user.role === "admin"}
+							<!-- 管理员账号封禁会让其失去用户体系后台（banned 每请求校验），
+							     且解封本身也需后台权限，容易自锁；服务端同样拒绝，这里只做呈现。 -->
+							<span class="stat" title="管理员账号不可封禁">—</span>
+						{:else if user.banned === 1}
 							<button
 								class="btn btn-ghost"
 								disabled={busyId === user.id}

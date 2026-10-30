@@ -71,11 +71,13 @@ onMount(load);
 		{#if titleField}
 			<div class="mcfg">
 				<div class="a2f">
+					<!-- svelte-ignore a11y_label_has_associated_control —— 输入框已有 aria-label -->
 					<label>页面标题</label>
 					<input type="text" aria-label="页面标题" bind:value={titleVal} />
 				</div>
 				{#if descField}
 					<div class="a2f w">
+						<!-- svelte-ignore a11y_label_has_associated_control —— 输入框已有 aria-label -->
 						<label>页面描述</label>
 						<textarea rows="3" aria-label="页面描述" bind:value={descVal}></textarea>
 					</div>

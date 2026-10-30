@@ -78,6 +78,7 @@ const VIEWS: Record<string, () => Promise<{ default: unknown }>> = {
 	music: () => import("./MusicGroups.svelte"),
 	"album-edit": () => import("./AdminGalleryAlbum.svelte"),
 	settings: () => import("./AdminSettings.svelte"),
+	"perm-requests": () => import("./PermRequests.svelte"),
 };
 
 const VIEW_PROPS: Record<string, Record<string, unknown>> = {
@@ -118,6 +119,7 @@ function parsePath(pathname: string): { section: Section; slug?: string } {
 			"users",
 			"music",
 			"settings",
+			"perm-requests",
 		].includes(first)
 	) {
 		return { section: first };
@@ -357,7 +359,12 @@ onMount(() => {
 {:else}
 	<div class="shell" class:collapsed={collapsed} data-no-swup>
 		{#if sidebarOpen}
-			<div class="backdrop open" onclick={() => (sidebarOpen = false)}></div>
+			<div
+				class="backdrop open"
+				onclick={() => (sidebarOpen = false)}
+				onkeydown={(e) => { if (e.key === "Escape") sidebarOpen = false; }}
+				role="presentation"
+			></div>
 		{/if}
 
 				<AdminSidebar
@@ -407,7 +414,12 @@ onMount(() => {
 									{@html iconSvg("logout")} 退出登录
 								</button>
 								{#if pwdPanelOpen}
-									<div class="pwd-panel open" onclick={(e) => e.stopPropagation()}>
+									<div
+									class="pwd-panel open"
+									onclick={(e) => e.stopPropagation()}
+									onkeydown={(e) => e.stopPropagation()}
+									role="presentation"
+								>
 										<p class="pwd-current">当前管理员：{username || "—"}</p>
 										{#if pwdMsg}<p class="pwd-msg ok">{pwdMsg}</p>{/if}
 										{#if pwdError}<p class="pwd-msg err">{pwdError}</p>{/if}

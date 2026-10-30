@@ -179,8 +179,14 @@ async function collectAdminStats(db: CloudflareEnv["DB"]) {
 		string,
 		{ label: string; 发布: number; 草稿: number }
 	>();
+	// 按自然月回溯，不能用 30 天步进：12 个月 ≈ 365 天，而 11*30=330 天，
+	// 30 天步进会让同一月份 key 被重复命中（例如 8 月出现两次），
+	// Map 因此少一格、图里出现重复标签。用 Date.UTC(y, m - i, 1) 逐月推进。
+	const nowUtc = new Date();
 	for (let i = 11; i >= 0; i--) {
-		const d = new Date(Date.now() - i * 30 * 86400_000);
+		const d = new Date(
+			Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() - i, 1),
+		);
 		const key = monthLabel(d);
 		months.set(key, { label: key, 发布: 0, 草稿: 0 });
 	}

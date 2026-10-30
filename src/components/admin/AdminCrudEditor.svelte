@@ -317,10 +317,6 @@ onMountAsync(async () => {
 		box-sizing: border-box;
 	}
 
-	.check-line input {
-		width: auto;
-		accent-color: var(--primary);
-	}
 
 
 

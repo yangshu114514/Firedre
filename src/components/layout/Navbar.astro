@@ -24,6 +24,7 @@ import { url } from "@/utils/url-utils";
 import { jsonForScript } from "@/utils/csp-json";
 import { getAuthUser } from "@server/auth/userSession";
 import { getAuthenticatedAdminUsername } from "@server/auth/adminSession";
+import { listUserPerms } from "@server/auth/perms";
 import type { CloudflareEnv } from "../../../types/env";
 import DropdownMenu from "./DropdownMenu.astro";
 
@@ -39,8 +40,17 @@ const authUser = runtimeEnv ? await getAuthUser(Astro.request, runtimeEnv) : nul
 const adminUsername = runtimeEnv
 	? await getAuthenticatedAdminUsername(Astro.request, runtimeEnv)
 	: null;
-// 醒目控制台入口：管理员会话（admin_users）或用户系统 role=admin
-const isStaff = Boolean(adminUsername) || authUser?.role === "admin";
+// 醒目控制台入口：管理员会话（admin_users）、用户系统 role=admin，
+// 或持有任一后台权限点的用户（例如仅被授予 post:create 的投稿者）。
+// 后端 resolveBackendActor 已允许这类用户进入 /admin/，若导航栏不给入口，
+// 他们只能靠手敲 URL 才找得到后台，属于门禁与入口不一致。
+let hasBackendPerm = false;
+if (runtimeEnv && authUser && !adminUsername && authUser.role !== "admin") {
+	const perms = await listUserPerms(runtimeEnv.DB, authUser.id);
+	hasBackendPerm = perms.length > 0;
+}
+const isStaff =
+	Boolean(adminUsername) || authUser?.role === "admin" || hasBackendPerm;
 
 const musicConfigRuntime = getMusicConfig(Astro.locals);
 
@@ -433,4 +443,3 @@ if (document.readyState === 'loading') {
     initSemifullScrollDetection();
 }
 </script>
-

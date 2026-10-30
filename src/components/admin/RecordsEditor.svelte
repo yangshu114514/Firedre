@@ -28,6 +28,7 @@ let {
 }: Props = $props();
 
 // 单元格连接符：空格模式下相邻字段以单空格相接
+// svelte-ignore state_referenced_locally —— 连接符只在初始化时定一次
 const cellSep = separator === " " ? " " : ` ${separator} `;
 
 // 三种模式互斥：对象（单行）/ 两级嵌套（缩进）/ 记录数组（每行一条）
@@ -316,13 +317,20 @@ let preview = $derived.by(() => {
 </button>
 
 {#if open}
-	<div class="re-mask" onclick={() => (open = false)} role="presentation">
+	<div
+		class="re-mask"
+		onclick={() => (open = false)}
+		onkeydown={(e) => { if (e.key === "Escape") open = false; }}
+		role="presentation"
+	>
 		<div
 			class="re-modal"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="re-title"
+			tabindex="-1"
 		>
 			<header class="re-hd">
 				<strong id="re-title">{fieldLabel}</strong>

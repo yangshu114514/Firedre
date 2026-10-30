@@ -16,6 +16,7 @@ let {
 let w = $state(0);
 let gridColor = $state("rgba(148, 163, 184, 0.35)");
 let textColor = $state("#94a3b8");
+// svelte-ignore state_referenced_locally —— 初始化时取 prop 初值属预期（父级不会中途改这些 prop）
 let chartColors = $state({ ...colors });
 
 function palette() {
@@ -39,6 +40,18 @@ onMount(palette);
 		{@const maxV = Math.max(1, ...data.flatMap((d) => [d.发布, d.草稿]))}
 		{@const y = (v: number) => pad.top + innerH - (v / maxV) * innerH}
 		{@const x = (i: number) => pad.left + (data.length === 1 ? innerW / 2 : (i / (data.length - 1)) * innerW)}
+		{@const labelOf = (raw: string) => {
+			// 后端给的是 YY-MM（如 26-10）；轴上只显示「10月」，
+			// 跨年分界（01 月）额外带上年份，避免 12→01 看不出换年。
+			const m = /^(\d{2})-(\d{2})$/.exec(raw);
+			if (!m) return raw;
+			return m[2] === "01" ? `${m[1]}年1月` : `${Number(m[2])}月`;
+		}}
+		<!-- 标签抽稀：按可用宽度估算每格最大字数，避免 12 个点挤成一坨 -->
+		{@const tickStep = Math.max(
+			1,
+			Math.ceil(data.length / Math.max(1, Math.floor(innerW / 34))),
+		)}
 		<svg
 			width={w}
 			height={height}
@@ -88,13 +101,15 @@ onMount(palette);
 				stroke-linecap="round"
 			/>
 			{#each data as d, i (d.label)}
-				<text
-					x={x(i)}
-					y={height - 7}
-					text-anchor="middle"
-					font-size="11"
-					style="fill:{textColor}"
-				>{d.label}</text>
+				{#if i % tickStep === 0 || i === data.length - 1}
+					<text
+						x={x(i)}
+						y={height - 7}
+						text-anchor="middle"
+						font-size="11"
+						style="fill:{textColor}"
+					>{labelOf(d.label)}</text>
+				{/if}
 			{/each}
 		</svg>
 	{:else}

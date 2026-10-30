@@ -48,7 +48,9 @@ let series = $state("");
 let seriesOrder = $state("");
 let comment = $state(true);
 let rawContent = $state("");
+// svelte-ignore state_referenced_locally —— 编辑器仅在挂载时用 prop 初值开稿
 let slug = $state(initialSlug);
+// svelte-ignore state_referenced_locally
 let isNew = $state(initialIsNew);
 
 let editor: Vditor | null = null;

@@ -151,7 +151,9 @@ let draftCount = $derived(posts.length - publishedCount);
 					<div class="list-main">
 						<div class="list-title">{post.title}</div>
 						<div class="list-sub">
-							<span>{post.date}</span>
+							<!-- D1 里 date 可能是 "2026-09-11" 或带零点的 "2026-09-11 00:00:00"，
+							     列表只需日期，统一截到 10 位，避免整列出现无意义的 00:00:00 -->
+							<span>{String(post.date).slice(0, 10)}</span>
 							<span class="mono">{post.slug}</span>
 						</div>
 					</div>

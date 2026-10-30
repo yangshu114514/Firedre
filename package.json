@@ -33,7 +33,9 @@
     "d1:migrate:local": "npx wrangler d1 migrations apply firedre-blog --local",
     "deploy": "pnpm build:csp && wrangler pages deploy dist --project-name firedre",
     "deploy:dry": "pnpm build:csp && wrangler pages deploy dist --project-name firedre --dry-run",
-    "check:svelte": "svelte-check --tsconfig ./tsconfig.svelte.json"
+    "check:svelte": "svelte-check --tsconfig ./tsconfig.svelte.json",
+    "seo:audit": "node scripts/seo-audit.mjs",
+    "seo:report": "node scripts/seo-audit.mjs --json > seo-report.json"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

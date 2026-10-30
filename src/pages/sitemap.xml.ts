@@ -16,7 +16,9 @@ export const GET: APIRoute = async (context) => {
 	} catch {
 		// 版本读取失败不影响 sitemap 输出
 	}
-	const urls: string[] = [];
+	// 统一成对象：静态页没有可靠的修改时间（省略 lastmod），
+	// 文章页带真实 lastmod，让搜索引擎知道哪些页是新改的、抓取优先级更高。
+	const urls: Array<{ loc: string; lastmod?: string; priority?: string }> = [];
 
 	// 静态页面
 	const staticPages: Array<[string, boolean]> = [
@@ -39,7 +41,7 @@ export const GET: APIRoute = async (context) => {
 		["/myanimelist/", cfg.pages.mal],
 	];
 	for (const [path, enabled] of staticPages) {
-		if (enabled) urls.push(`${base}${path}`);
+		if (enabled) urls.push({ loc: `${base}${path}` });
 	}
 
 	// 相册详情（仅公开、非加密相册入 sitemap，加密相册不对外暴露 URL；相册页关闭时不收录）
@@ -49,7 +51,7 @@ export const GET: APIRoute = async (context) => {
 			for (const album of hub?.albums ?? []) {
 				if (album.encrypted) continue;
 				const encoded = encodeURIComponent(album.slug);
-				urls.push(`${base}/gallery/${encoded}/`);
+				urls.push({ loc: `${base}/gallery/${encoded}/` });
 			}
 		} catch {
 			// 相册读取失败不影响其余 URL
@@ -59,14 +61,17 @@ export const GET: APIRoute = async (context) => {
 	// 文章
 	try {
 		const stmt = cfEnv.DB.prepare(`
-			SELECT slug FROM posts WHERE published = 1 ORDER BY date DESC
+			SELECT slug, date, updated FROM posts WHERE published = 1 ORDER BY date DESC
 		`);
 		const { results } = (await stmt.all()) as {
-			results?: Array<{ slug: string }>;
+			results?: Array<{ slug: string; date: string | null; updated: string | null }>;
 		};
 		for (const row of results || []) {
 			const encoded = row.slug.split("/").map(encodeURIComponent).join("/");
-			urls.push(`${base}/post/${encoded}/`);
+			// updated 可能为空；统一取 10 位日期，兼容 "2026-09-11 00:00:00" 之类的库存格式
+			const raw = (row.updated || row.date || "").trim();
+			const lastmod = /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : undefined;
+			urls.push({ loc: `${base}/post/${encoded}/`, lastmod });
 		}
 	} catch {
 		// 数据库不可用时只输出静态页
@@ -74,7 +79,12 @@ export const GET: APIRoute = async (context) => {
 
 	const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")}
+${urls
+	.map(
+		(u) =>
+			`  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}</url>`,
+	)
+	.join("\n")}
 </urlset>`;
 
 	return new Response(body, {

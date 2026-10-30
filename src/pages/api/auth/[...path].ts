@@ -284,11 +284,21 @@ export const POST: APIRoute = async ({ params, request }) => {
 				return json({ message: "未知的用户管理动作" }, 400);
 
 			const exists = await cfEnv.DB.prepare(
-				"SELECT id FROM users WHERE id = ?",
+				"SELECT id, role FROM users WHERE id = ?",
 			)
 				.bind(String(body.id))
-				.first<{ id: string }>();
+				.first<{ id: string; role: string }>();
 			if (!exists) return json({ message: "用户不存在" }, 404);
+
+			// 封禁防护：role=admin 的账号一律不可封禁。
+			// 负负得正的风险很实际——管理员点自己的「封禁」会把自己锁在用户体系后台之外，
+			// 且封禁是每请求校验 banned，解封也需要后台权限，容易变成自锁。
+			if (exists.role === "admin") {
+				return json(
+					{ message: "管理员账号不可封禁，请先调整其角色" },
+					403,
+				);
+			}
 
 			const banned = body.action === "ban" ? 1 : 0;
 			await cfEnv.DB.prepare(
@@ -416,11 +426,11 @@ export const GET: APIRoute = async ({ params, request }) => {
 				.first<{ n: number }>();
 
 			const { results } = await cfEnv.DB.prepare(
-				`SELECT u.id, u.email, u.name, u.avatar, u.email_verified, u.banned,
-				        u.created_at,
-				        (SELECT count(*) FROM oauth_accounts o WHERE o.user_id = u.id) AS oauth_count,
-				        (SELECT count(*) FROM comments c WHERE c.user_id = u.id AND c.status != 'deleted') AS comment_count
-				 FROM users u ${where}
+				`SELECT u.id, u.email, u.name, u.avatar, u.email_verified, u.banned, u.role,
+			        u.created_at,
+			        (SELECT count(*) FROM oauth_accounts o WHERE o.user_id = u.id) AS oauth_count,
+			        (SELECT count(*) FROM comments c WHERE c.user_id = u.id AND c.status != 'deleted') AS comment_count
+			 FROM users u ${where}
 				 ORDER BY u.created_at DESC
 				 LIMIT ? OFFSET ?`,
 			)

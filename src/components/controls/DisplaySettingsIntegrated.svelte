@@ -77,6 +77,7 @@ type TabKey = "appearance" | "wallpaper" | "effects";
 
 let { settings: _settingsProp = {} as SettingsView } = $props();
 // D1 组值优先（SSR 注入 prop），回退窗口注入值；形状由 SettingsView 描述
+// svelte-ignore state_referenced_locally —— 设置只在挂载时取一次 prop 初值
 const settings: SettingsView =
 	_settingsProp &&
 	typeof _settingsProp === "object" &&

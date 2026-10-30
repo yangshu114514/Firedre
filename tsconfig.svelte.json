@@ -5,7 +5,6 @@
     "svelte-shims.d.ts",
     "src/**/*.svelte",
     "src/**/*.ts",
-    "shared/**/*",
-    "server/**/*"
+    "shared/**/*"
   ]
 }
