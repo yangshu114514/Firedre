@@ -188,6 +188,7 @@ onMountAsync(async () => {
 		title="动态"
 		titleField="title"
 		descField="description"
+		syncPageSwitch
 	/>
 
 	{#if error}

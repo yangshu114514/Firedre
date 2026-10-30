@@ -144,6 +144,7 @@ onMountAsync(async () => {
 		enableLabel="启用相册页"
 		title="相册"
 		titleField="title"
+		syncPageSwitch
 	/>
 
 	{#if loading}

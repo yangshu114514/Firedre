@@ -10,6 +10,15 @@ interface Props {
 	title: string;
 	titleField?: string;
 	descField?: string;
+	/**
+	 * 该模块组的 `enabled` 是否就是页面前台开关。
+	 *
+	 * 后台「页面管理」的开关真源是 `basic.pageXxx`（middleware derivePages →
+	 * settings.pages → 页面门禁读取）；而各模块组（gallery/dynamic/friends）的
+	 * `enabled` 只是模块自身配置。相册管理页此前只写 gallery.enabled，
+	 * 导致「启用相册页」开关打开后前台仍 302 到 /404/。
+	 */
+	syncPageSwitch?: boolean;
 }
 
 let {
@@ -19,7 +28,15 @@ let {
 	title,
 	titleField = "",
 	descField = "",
+	syncPageSwitch = false,
 }: Props = $props();
+
+// basic 组里对应的页面前台开关名（pageGallery / pageDynamic / pageFriends ...）
+const pageSwitchKey = (() => {
+	if (!syncPageSwitch) return "";
+	const cap = group.charAt(0).toUpperCase() + group.slice(1);
+	return `page${cap}`;
+})();
 
 let enabled = $state(false);
 let titleVal = $state("");
@@ -30,10 +47,16 @@ let saving = $state(false);
 async function load() {
 	loading = true;
 	try {
-		const data = await apiJson<Record<string, unknown>>(
-			`/api/settings/?group=${group}`,
-		);
-		enabled = Boolean(data[enableKey]);
+		const [data, basic] = await Promise.all([
+			apiJson<Record<string, unknown>>(`/api/settings/?group=${group}`),
+			pageSwitchKey
+				? apiJson<Record<string, unknown>>("/api/settings/?group=basic")
+				: Promise.resolve({} as Record<string, unknown>),
+		]);
+		// 有页面前台开关时以后者为准（它才是实际门禁）
+		enabled = pageSwitchKey
+			? Boolean(basic[pageSwitchKey])
+			: Boolean(data[enableKey]);
 		if (titleField) titleVal = String(data[titleField] ?? "");
 		if (descField) descVal = String(data[descField] ?? "");
 	} catch {}
@@ -44,10 +67,15 @@ async function toggle() {
 	enabled = !enabled;
 	saving = true;
 	try {
+		const groups: Record<string, Record<string, unknown>> = {
+			[group]: { [enableKey]: enabled },
+		};
+		// 同步写 basic.pageXxx，否则前台门禁不会变
+		if (pageSwitchKey) groups.basic = { [pageSwitchKey]: enabled };
 		await apiJson("/api/settings/", {
 			method: "PUT",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ groups: { [group]: { [enableKey]: enabled } } }),
+			body: JSON.stringify({ groups }),
 		});
 	} catch {
 		enabled = !enabled;

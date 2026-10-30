@@ -68,6 +68,7 @@ const fields: CrudField[] = [
 				title="友链"
 				titleField="title"
 				descField="description"
+				syncPageSwitch
 			/>
 		{/snippet}
 		{#snippet children({ item })}

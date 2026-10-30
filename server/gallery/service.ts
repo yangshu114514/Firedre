@@ -21,6 +21,7 @@ import {
 	upsertAlbumToD1,
 } from "./d1";
 import {
+	normalizeHubFrontmatter,
 	normalizeAlbumSlugs,
 	parseAlbumSource,
 	parseHubSource,
@@ -88,7 +89,16 @@ export async function getGalleryHub(
 	options: { includeSource?: boolean } = {},
 ): Promise<GalleryHubDetail | null> {
 	const object = await env.BUCKET.get(GALLERY_HUB_R2_KEY);
-	if (!object) return null;
+	if (!object) {
+		// 空站点尚无 gallery/index.md：返回空 hub 而非 null。
+		// 否则前台相册页与后台「相册管理」都会把「一个相册都没有」当成错误：
+		// 后台显示「加载失败」，前台 404。空态与「数据缺失」是两件不同的事。
+		return {
+			frontmatter: normalizeHubFrontmatter({}),
+			albums: [],
+			source: options.includeSource ? "" : undefined,
+		};
+	}
 
 	const source = await object.text();
 	const parsed = parseHubSource(source);
@@ -256,8 +266,11 @@ export async function upsertGalleryHub(env: CloudflareEnv, source: string) {
 
 async function ensureAlbumInHub(env: CloudflareEnv, slug: string) {
 	const hub = await getGalleryHub(env, { includeSource: true });
-	if (!hub?.source) return;
-	const parsed = parseHubSource(hub.source);
+	// 空站点（尚无 gallery/index.md）时 source 为空串：此时仍要把新相册写进 hub，
+	// 否则「建第一个相册」永远不出现在列表里。
+	const parsed = hub?.source
+		? parseHubSource(hub.source)
+		: { frontmatter: normalizeHubFrontmatter({}), content: "" };
 	const slugs = normalizeAlbumSlugs(parsed.frontmatter.albums);
 	if (slugs.includes(slug)) return; // 已在列表，不重复、不改顺序
 	slugs.push(slug);
