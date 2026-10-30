@@ -30,6 +30,29 @@ const SAMPLE = Number(argOf("sample", 5));
 const JSON_OUT = Boolean(argOf("json", false));
 const TIMEOUT_MS = Number(argOf("timeout", 15000));
 
+// 站点真正对外的域名：不硬编码，运行期从 robots.txt 的 Sitemap 声明推断，
+// 退而取 sitemap 首条 <loc>，再退而用 --base 的 host。--site-host 可覆盖。
+const BASE_HOST = new URL(BASE).host;
+let SITE_HOST = String(argOf("site-host", "")) || "";
+
+/** 域名是否还没切到站点域（例如先用 pages.dev 验证） */
+let PENDING_DOMAIN = false;
+
+/** 探测/抓取时把站点域换成实际可访问的 BASE，避免"域名没切"被当成死链 */
+const retarget = (u) => {
+	if (!PENDING_DOMAIN || !SITE_HOST) return u;
+	try {
+		const src = new URL(u);
+		if (src.host !== SITE_HOST) return u;
+		const dst = new URL(BASE);
+		return new URL(src.pathname + src.search, dst).toString();
+	} catch {
+		return u;
+	}
+};
+
+const isPreviewHost = (host) => /\.pages\.dev$/i.test(host);
+
 /** @type {{level:'error'|'warn'|'info',scope:string,message:string}[]} */
 const findings = [];
 const add = (level, scope, message) => findings.push({ level, scope, message });
@@ -115,35 +138,38 @@ function checkPage(html, url, { requireArticleLd = false } = {}) {
 	else if (desc.length > 160)
 		add("warn", scope, `description 偏长（${desc.length} 字符，建议 ≤ 160）`);
 
+	const expectHost = SITE_HOST || BASE_HOST;
 	if (!canonical) add("error", scope, "缺少 canonical");
-	else if (hostOf(canonical) !== hostOf(BASE))
+	else if (hostOf(canonical) !== expectHost)
 		add(
 			"error",
 			scope,
-			`canonical 域名与站点域不一致：${canonical}（期望 host=${hostOf(BASE)}）`,
+			`canonical 域名与站点域不一致：${canonical}（期望 host=${expectHost}）`,
 		);
 
 	// og 基础四项
 	for (const k of ["og:title", "og:description", "og:type", "og:url"]) {
 		if (!meta[k]) add("error", scope, `缺少 ${k}`);
 	}
-	if (meta["og:url"] && hostOf(meta["og:url"]) !== hostOf(BASE))
+	if (meta["og:url"] && hostOf(meta["og:url"]) !== expectHost)
 		add("error", scope, `og:url 域名异常：${meta["og:url"]}`);
 
 	// og:image 是最容易漏的一项：社交平台没图就没有大卡片
 	const ogImage = meta["og:image"];
 	if (!ogImage) {
 		add("error", scope, "缺少 og:image（分享无缩略图）");
-	} else {
-		if (!/^https?:\/\//i.test(ogImage))
-			add("error", scope, `og:image 不是绝对 URL：${ogImage}`);
-		else if (hostOf(ogImage) !== hostOf(BASE))
-			add(
-				"warn",
-				scope,
-				`og:image 域名与站点域不一致：${ogImage}（社交抓取可能引用临时域）`,
-			);
-	}
+		} else {
+			if (!/^https?:\/\//i.test(ogImage))
+				add("error", scope, `og:image 不是绝对 URL：${ogImage}`);
+			else if (isPreviewHost(hostOf(ogImage)) && !isPreviewHost(BASE_HOST))
+				// 只有"站点已在正式域、og:image 还指着 pages.dev"才算问题；
+				// 媒体子域（image./misc./music.）是合法的独立 host。
+				add(
+					"warn",
+					scope,
+					`og:image 指向预览域：${ogImage}（社交抓取会引用临时域）`,
+				);
+		}
 	if (meta["twitter:card"] !== "summary_large_image")
 		add(
 			"warn",
@@ -181,11 +207,16 @@ async function main() {
 		const r = await fetchText(`${BASE}/robots.txt`);
 		if (r.status !== 200) add("error", `${BASE}/robots.txt`, `HTTP ${r.status}`);
 		robots = r.text;
-		if (!/Sitemap:\s*\S+/i.test(robots))
-			add("error", "robots.txt", "未声明 Sitemap");
-		const declared = /Sitemap:\s*(\S+)/i.exec(robots)?.[1];
-		if (declared && hostOf(declared) !== hostOf(BASE))
-			add("error", "robots.txt", `Sitemap 指向其他域名：${declared}`);
+			if (!/Sitemap:\s*\S+/i.test(robots))
+				add("error", "robots.txt", "未声明 Sitemap");
+			const declared = /Sitemap:\s*(\S+)/i.exec(robots)?.[1];
+			if (declared) {
+				if (!SITE_HOST) SITE_HOST = hostOf(declared);
+				// 站点域 ≠ 实际访问域 → 域名还没切过来，属验证阶段状态，不是 bug
+				if (SITE_HOST !== BASE_HOST) PENDING_DOMAIN = true;
+			}
+			if (declared && SITE_HOST && hostOf(declared) !== SITE_HOST)
+				add("error", "robots.txt", `Sitemap 指向其他域名：${declared}`);
 		if (!/Disallow:\s*\/admin/i.test(robots))
 			add("warn", "robots.txt", "未屏蔽 /admin/，后台页可能被收录");
 	} catch (e) {
@@ -202,13 +233,25 @@ async function main() {
 		);
 		sitemapUrls = locs;
 		if (locs.length === 0) add("error", "sitemap.xml", "没有任何 <loc>");
-		const foreign = locs.filter((u) => hostOf(u) !== hostOf(BASE));
-		if (foreign.length)
-			add(
-				"error",
-				"sitemap.xml",
-				`${foreign.length} 条 URL 域名与站点域不一致（例：${foreign[0]}）`,
-			);
+			if (!SITE_HOST && locs.length) {
+				SITE_HOST = hostOf(locs[0]);
+				PENDING_DOMAIN = SITE_HOST !== BASE_HOST;
+			}
+			const foreign = locs.filter((u) => hostOf(u) !== SITE_HOST);
+			// 两种情形分开报：sitemap 自身域名不统一 = 真 bug；
+			// 统一但指向尚未切好的正式域 = 验证阶段状态（info）。
+			if (foreign.length)
+				add(
+					"error",
+					"sitemap.xml",
+					`${foreign.length} 条 URL 与 sitemap 主域 (${SITE_HOST}) 不一致（例：${foreign[0]}）`,
+				);
+			if (PENDING_DOMAIN)
+				add(
+					"info",
+					"sitemap.xml",
+					`站点声明域 ${SITE_HOST} ≠ 当前访问域 ${BASE_HOST}：域名尚未切换（验证阶段）`,
+				);
 		const withLastmod = (r.text.match(/<lastmod>/gi) || []).length;
 		if (withLastmod === 0)
 			add("warn", "sitemap.xml", "所有 URL 都缺 <lastmod>，搜索引擎无法判断新鲜度");
@@ -243,7 +286,7 @@ async function main() {
 	const postUrls = sitemapUrls.filter((u) => /\/post\//.test(u)).slice(0, SAMPLE);
 	for (const u of postUrls) {
 		try {
-			const r = await fetchText(u);
+			const r = await fetchText(retarget(u));
 			if (r.status !== 200) {
 				add("error", u, `HTTP ${r.status}`);
 				continue;
@@ -258,7 +301,7 @@ async function main() {
 	const probe = sitemapUrls.slice(0, Math.min(8, sitemapUrls.length));
 	for (const u of probe) {
 		try {
-			const r = await fetchText(u, { method: "GET" });
+			const r = await fetchText(retarget(u), { method: "GET" });
 			if (r.status >= 400) add("error", u, `sitemap 中的 URL 返回 HTTP ${r.status}`);
 		} catch (e) {
 			add("error", u, `不可达：${e.message}`);

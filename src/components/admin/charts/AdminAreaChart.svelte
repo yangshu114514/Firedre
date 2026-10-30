@@ -52,6 +52,23 @@ onMount(palette);
 			1,
 			Math.ceil(data.length / Math.max(1, Math.floor(innerW / 34))),
 		)}
+		<!--
+			末尾刻度单独处理：无脑追加「最后一个」会和它前面的刻度撞在一起
+			（实测 9月/10月 重叠）。这里算出真正要显示的索引集合：
+			按步长取样，末尾若离上一刻度不足一个步长就把上一刻度换成末尾。
+		-->
+		{@const tickIdx = (() => {
+			const n = data.length;
+			if (n === 0) return [];
+			const out = [];
+			for (let i = 0; i < n; i += tickStep) out.push(i);
+			const last = n - 1;
+			if (out[out.length - 1] !== last) {
+				if (last - out[out.length - 1] < tickStep) out.pop();
+				out.push(last);
+			}
+			return out;
+		})()}
 		<svg
 			width={w}
 			height={height}
@@ -101,7 +118,7 @@ onMount(palette);
 				stroke-linecap="round"
 			/>
 			{#each data as d, i (d.label)}
-				{#if i % tickStep === 0 || i === data.length - 1}
+				{#if tickIdx.includes(i)}
 					<text
 						x={x(i)}
 						y={height - 7}

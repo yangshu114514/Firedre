@@ -227,6 +227,18 @@ onMount(() => load(1));
 		height: 2rem;
 		border-radius: 9999px;
 		object-fit: cover;
+		/* .list-title 是 block 流，含图/含首字的 span 都是 inline 系；
+		   不加 vertical-align 会按基线对齐，头像下沉压住下一行的字。 */
+		vertical-align: middle;
+		flex: 0 0 auto;
+	}
+	/* 全局 .list-title 是 nowrap + overflow:hidden，行盒高度只有文字那么高，
+	   32px 的头像会上下被裁掉一半。这里改成 flex 并让行盒跟着最高子项走。 */
+	.list-title {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		line-height: 1.5;
 	}
 	.user-avatar-empty {
 		display: inline-flex;
