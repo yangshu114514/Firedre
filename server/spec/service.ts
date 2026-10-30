@@ -1,7 +1,8 @@
 import type { CloudflareEnv } from "../../types/env";
 import type { PostFrontmatter } from "../../types/posts";
 import { splitMarkdown } from "../posts/frontmatter";
-import { renderMarkdown } from "../posts/render";
+import { detectMarkdownFeatures, renderMarkdown } from "../posts/render";
+import { renderMarkdownCached } from "../posts/renderCache";
 import { bumpContentVersion } from "../settings/service";
 
 const SPEC_R2_PREFIX = "spec/";
@@ -28,6 +29,7 @@ export interface SpecPageDetail {
 export async function getSpecPage(
 	env: CloudflareEnv,
 	name: string,
+	requestOrigin?: string,
 ): Promise<SpecPageDetail | null> {
 	if (!isValidSpecName(name)) return null;
 
@@ -36,9 +38,22 @@ export async function getSpecPage(
 
 	const source = await object.text();
 	const { frontmatter, content } = splitMarkdown(source);
-	// renderMarkdown 的插件会就地写入 words/minutes/excerpt，故返回渲染后的同一对象
-	const rendered = await renderMarkdown(content, { frontmatter });
-	return { name, frontmatter, html: rendered.html, source };
+	// 渲染走缓存（内容 etag 为版本键）：Markdown 渲染链在 Free 套餐 10ms CPU 上限下
+	// 会随机触发 Error 1102；缓存命中时零渲染。
+	const version = object.etag || String(object.size ?? 0);
+	const rendered = await renderMarkdownCached(
+		`spec:${name}`,
+		version,
+		content,
+		requestOrigin,
+	);
+	const mergedFrontmatter = {
+		...frontmatter,
+		words: rendered.words,
+		minutes: rendered.minutes,
+		excerpt: rendered.excerpt,
+	} as PostFrontmatter;
+	return { name, frontmatter: mergedFrontmatter, html: rendered.html, source };
 }
 
 /** 覆写 R2 `spec/<name>.md`（仅白名单页面），成功后 bump 内容版本使前台 HTML 缓存失效 */

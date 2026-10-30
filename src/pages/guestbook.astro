@@ -23,7 +23,8 @@ const [{ cfEnv }, { getSpecPage }] = await Promise.all([
 
 let guestbookHtml = "";
 try {
-	guestbookHtml = (await getSpecPage(cfEnv, "guestbook"))?.html || "";
+	guestbookHtml =
+		(await getSpecPage(cfEnv, "guestbook", Astro.url.origin))?.html || "";
 } catch {
 	guestbookHtml = "";
 }

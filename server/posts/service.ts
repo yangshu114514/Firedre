@@ -26,6 +26,7 @@ import {
 	splitMarkdown,
 } from "./frontmatter";
 import { renderMarkdown, stripMarkdown } from "./render";
+import { renderMarkdownCached } from "./renderCache";
 import {
 	buildTaxonomyStatements,
 	categoryFilterSql,
@@ -281,7 +282,11 @@ export function clearWikiLinkCache(): void {
 export async function getPostBySlug(
 	env: CloudflareEnv,
 	slug: string,
-	options: { includeUnpublished?: boolean; includeSource?: boolean } = {},
+	options: {
+		includeUnpublished?: boolean;
+		includeSource?: boolean;
+		origin?: string;
+	} = {},
 ): Promise<PostDetail | null> {
 	const decoded = decodePostSlug(slug);
 	const row = await env.DB.prepare("SELECT * FROM posts WHERE slug = ?")
@@ -295,10 +300,22 @@ export async function getPostBySlug(
 
 	const source = await object.text();
 	const { frontmatter, content } = splitMarkdown(source);
-	const rendered = await renderMarkdown(content, {
-		frontmatter,
-		resolveWikiLink: buildWikiLinkResolver(env),
-	});
+	// 渲染走缓存（R2 etag 为版本键）：Markdown 渲染链在 Free 套餐 10ms CPU
+	// 上限下会随机触发 Error 1102，文章页实测失败率约 50%。
+	// 例外：含 [[wiki-link]] 的正文依赖被链接文章的数据，其输出不受本文 etag 约束，
+	// 故此类文章不走缓存，仍按原路径带解析器渲染（正确性优先）。
+	const hasWikiLink = /\[\[[^[\]\n]+\]\]/.test(content);
+	const rendered = hasWikiLink
+		? await renderMarkdown(content, {
+				frontmatter,
+				resolveWikiLink: buildWikiLinkResolver(env),
+			})
+		: await renderMarkdownCached(
+				`post:${decoded}`,
+				object.etag || String(object.size ?? 0),
+				content,
+				options.origin,
+			);
 
 	const listItem = recordToListItem(row);
 	return {
@@ -309,7 +326,11 @@ export async function getPostBySlug(
 		minutes: rendered.minutes || row.minutes || 0,
 		frontmatter: {
 			...frontmatter,
-			...(rendered.frontmatter as PostFrontmatter),
+			// 渲染插件会把 words/minutes/excerpt 写回 frontmatter；
+			// 缓存路径不再携带整个 frontmatter，故只合并这三个派生字段。
+			words: rendered.words,
+			minutes: rendered.minutes,
+			excerpt: rendered.excerpt,
 		},
 		description: row.description || row.excerpt || undefined,
 		...(options.includeSource ? { source, markdown: content } : {}),

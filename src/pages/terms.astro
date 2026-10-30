@@ -10,7 +10,8 @@ const { cfEnv } = await import("../lib/api");
 
 let termsHtml = "";
 try {
-	termsHtml = (await getSpecPage(cfEnv, "terms"))?.html || "";
+	termsHtml =
+		(await getSpecPage(cfEnv, "terms", Astro.url.origin))?.html || "";
 } catch {
 	termsHtml = "";
 }

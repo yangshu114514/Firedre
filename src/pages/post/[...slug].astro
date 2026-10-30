@@ -69,7 +69,7 @@ const [{ getPostBySlug }, { cfEnv }, { apiPostToEntry }] = await Promise.all([
 ]);
 let postDetail: Awaited<ReturnType<typeof getPostBySlug>> = null;
 try {
-	postDetail = await getPostBySlug(cfEnv, slug, {});
+	postDetail = await getPostBySlug(cfEnv, slug, { origin: Astro.url.origin });
 } catch (error) {
 	// D1/R2 异常区别于文章不存在：降级为友好错误页而非默认 500
 	console.error("[posts] 文章读取失败:", error);

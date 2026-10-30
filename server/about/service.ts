@@ -7,13 +7,16 @@ const ABOUT_R2_KEY = "about/index.md";
 
 export async function getAbout(
 	env: CloudflareEnv,
-	options: { includeSource?: boolean } = {},
+	options: { includeSource?: boolean; origin?: string } = {},
 ): Promise<AboutDetail | null> {
 	const object = await env.BUCKET.get(ABOUT_R2_KEY);
 	if (!object) return null;
 
 	const source = await object.text();
-	return getAboutFromSource(source, options);
+	return getAboutFromSource(source, {
+		...options,
+		version: object.etag || String(object.size ?? 0),
+	});
 }
 
 export async function upsertAbout(env: CloudflareEnv, source: string) {

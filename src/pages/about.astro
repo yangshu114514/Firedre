@@ -13,7 +13,7 @@ import { buildProfilePage } from "@/utils/schema-utils";
 // Firedre：关于页内容来自 R2（后台可编辑）
 const { getAbout } = await import("@server/about/service");
 const { cfEnv } = await import("../lib/api");
-const aboutDetail = await getAbout(cfEnv);
+const aboutDetail = await getAbout(cfEnv, { origin: Astro.url.origin });
 
 const aboutHtml = aboutDetail?.html ?? "";
 
