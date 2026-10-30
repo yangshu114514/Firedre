@@ -50,8 +50,9 @@ Firefly-Lite/
 .claude
 .mimocode
 /dist/
-# 本地化 vditor 编辑器资源需纳入版本控制（dev/生产共用，避免在线 CDN 加载慢）
-!public/vditor/
+# 自托管 vditor 编辑器运行时资源（约 24MB）：构建前由
+# scripts/sync-vditor-assets.mjs 从 node_modules/vditor/dist 生成，不入库
+/public/vditor/
 dev-log.txt
 SECURITY-BACKLOG.md
 tail.log

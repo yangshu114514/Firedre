@@ -15,25 +15,18 @@ const settings =
 <FaviconLinks settings={settings} />
 <link rel="stylesheet" href="/admin/admin.css" />
 <!-- Vditor 主样式：必须由所有后台页面引入（后台为 SPA 视图切换，不重载 head），
-     否则从 /admin/ 直接切到编辑器时主样式缺失 -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vditor@3.11.3/dist/index.css" />
+     否则从 /admin/ 直接切到编辑器时主样式缺失。
+     必须同源：线上 CSP 的 style-src 只允许 'self' + 'unsafe-inline'，jsdelivr 会被拦。
+     资源由 scripts/sync-vditor-assets.mjs 在构建前从 node_modules/vditor/dist 同步到
+     public/vditor/dist（不入库）。 -->
+<link rel="stylesheet" href="/vditor/dist/index.css" />
 <style is:inline set:html={`html{--hue:${defaultHue}}`}></style>
-<script type="application/json" set:html={jsonForScript({ defaultMode, defaultHue })} />
-<script is:inline>
-	(function() {
-	const { defaultMode, defaultHue } = JSON.parse(document.currentScript.previousElementSibling.textContent);
-	(function () {
-		try {
-			var DARK = "dark", SYSTEM = "system";
-			var theme = localStorage.getItem("theme") || defaultMode;
-			var isDark = theme === SYSTEM
-				? window.matchMedia("(prefers-color-scheme: dark)").matches
-				: theme === DARK;
-			document.documentElement.classList.toggle("dark", isDark);
-			document.documentElement.setAttribute("data-theme", isDark ? "one-dark-pro" : "one-light");
-			var hue = localStorage.getItem("hue") || defaultHue;
-			document.documentElement.style.setProperty("--hue", hue);
-		} catch (e) {}
-	})();
-	})();
-</script>
+<script
+	type="application/json"
+	id="admin-theme-config"
+	set:html={jsonForScript({ defaultMode, defaultHue })}
+/>
+<!-- 主题引导改为同源静态文件：后台路由不在 CSP 哈希扫描范围内（未登录会被 302 到
+     /login/），内联写法必然漏哈希、被 script-src 静默拦掉。is:inline + src 由
+     Astro 原样输出，仍是 head 内同步经典脚本，绘制前执行。 -->
+<script is:inline src="/admin/theme-boot.js"></script>

@@ -45,28 +45,51 @@ if (!fs.existsSync(HASHES_TS)) {
 	console.log(`  已创建占位 ${HASHES_TS}`);
 }
 
-console.log("\n[1/5] astro build（第一遍：产出可运行 dist）");
+// 第 0 步：自托管 Vditor 资源（public/vditor/dist）——必须在构建前生成，
+// 否则后台编辑器会因为同源资源 404 而空白。与 `pnpm build` 的入口保持一致。
+console.log("\n[1/6] 同步 Vditor 自托管资源到 public/vditor/dist");
+runNode(["scripts/sync-vditor-assets.mjs"], "同步 Vditor 资源");
+
+console.log("\n[2/6] astro build（第一遍：产出可运行 dist）");
 runNode([ASTRO, "build"], "第一遍构建");
 
-console.log("\n[2/5] 启动本地预览用于扫描");
+console.log("\n[3/6] 启动本地预览用于扫描");
 const server = spawn(
 	process.execPath,
-	[WRANGLER, "pages", "dev", "dist", "--port", String(PORT), "--ip", "127.0.0.1",
-		"--persist-to", ".wrangler/local-state"],
+	[
+		WRANGLER,
+		"pages",
+		"dev",
+		"dist",
+		"--port",
+		String(PORT),
+		"--ip",
+		"127.0.0.1",
+		"--persist-to",
+		".wrangler/local-state",
+	],
 	{ stdio: ["ignore", "pipe", "pipe"] },
 );
 let serverLog = "";
-server.stdout.on("data", (d) => { serverLog += d.toString(); });
-server.stderr.on("data", (d) => { serverLog += d.toString(); });
+server.stdout.on("data", (d) => {
+	serverLog += d.toString();
+});
+server.stderr.on("data", (d) => {
+	serverLog += d.toString();
+});
 
 function killServer() {
 	try {
 		if (process.platform === "win32") {
-			spawnSync("taskkill", ["/pid", String(server.pid), "/T", "/F"], { stdio: "ignore" });
+			spawnSync("taskkill", ["/pid", String(server.pid), "/T", "/F"], {
+				stdio: "ignore",
+			});
 		} else {
 			server.kill("SIGTERM");
 		}
-	} catch { /* ignore */ }
+	} catch {
+		/* ignore */
+	}
 }
 
 async function waitReady(timeoutMs = 120_000) {
@@ -75,11 +98,15 @@ async function waitReady(timeoutMs = 120_000) {
 		try {
 			const res = await fetch(`${BASE}/`, { redirect: "follow" });
 			if (res.ok) return;
-		} catch { /* 还没起来 */ }
+		} catch {
+			/* 还没起来 */
+		}
 		await new Promise((r) => setTimeout(r, 1000));
 	}
 	killServer();
-	console.error("\n❌ 本地预览在超时内未就绪。wrangler 输出：\n" + serverLog.slice(-3000));
+	console.error(
+		"\n❌ 本地预览在超时内未就绪。wrangler 输出：\n" + serverLog.slice(-3000),
+	);
 	process.exit(1);
 }
 
@@ -87,14 +114,16 @@ try {
 	await waitReady();
 	console.log(`  就绪：${BASE}`);
 
-	console.log("\n[3/5] 扫描全站，生成内联脚本哈希并集");
+	console.log("\n[4/6] 扫描全站，生成内联脚本哈希并集");
 	runNode(["scripts/collect-csp-hashes.mjs", BASE, HASHES_TS], "哈希扫描");
 } finally {
-	console.log("\n[4/5] 关闭本地预览");
+	console.log("\n[5/6] 关闭本地预览");
 	killServer();
 }
 
-console.log("\n[5/5] astro build（第二遍：把哈希编进中间件 CSP）+ 折叠路由规则");
+console.log(
+	"\n[6/6] astro build（第二遍：把哈希编进中间件 CSP）+ 折叠路由规则",
+);
 runNode([ASTRO, "build"], "第二遍构建");
 runNode(["scripts/collapse-routes.mjs"], "折叠路由规则");
 
