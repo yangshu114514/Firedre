@@ -1,6 +1,7 @@
 <script lang="ts">
 import AdminCrudEditor, { type CrudField } from "./AdminCrudEditor.svelte";
 import AdminPageConfig from "./AdminPageConfig.svelte";
+import { toMediaUrl } from "@/utils/url-utils";
 
 type FriendItem = {
 	id: number;
@@ -72,10 +73,12 @@ const fields: CrudField[] = [
 			/>
 		{/snippet}
 		{#snippet children({ item })}
-		{@const i = item as { imgurl?: string; title?: string; enabled?: boolean; desc?: string; siteurl?: string; tags?: string[] }}
-		<div class="friend-info">
-			<img src={i.imgurl} alt={i.title} class="avatar" />
-			<div class="friend-text">
+			{@const i = item as { imgurl?: string; title?: string; enabled?: boolean; desc?: string; siteurl?: string; tags?: string[] }}
+			<div class="friend-info">
+				<!-- 必须走 toMediaUrl：D1 里存的是 /api/covers/<key>（无尾斜杠），
+				     而 trailingSlash:"always" 下无尾斜杠的路由会 404（前台 friends.astro 同样处理）。 -->
+				<img src={toMediaUrl(i.imgurl ?? "")} alt={i.title} class="avatar" />
+				<div class="friend-text">
 				<div class="friend-name">
 					{i.title}
 					{#if !i.enabled}
