@@ -21,6 +21,11 @@ const settings =
      public/vditor/dist（不入库）。 -->
 <link rel="stylesheet" href="/vditor/dist/index.css" />
 <style is:inline set:html={`html{--hue:${defaultHue}}`}></style>
+<!-- Vditor 图标雪碧图：预置为同源外部脚本（id 必须叫 vditorIconScript）。
+     Vditor 的 addScript/addScriptSync 在 document.getElementById(id) 存在时直接跳过，
+     否则它会用同步 XHR 抓 ant.js 再「内联」执行，被线上 CSP 的 script-src 拦掉，
+     工具栏图标全空白（ant.js 首行就操作 document.body，故用 defer 保证执行时机）。 -->
+<script is:inline defer src="/vditor/dist/js/icons/ant.js" id="vditorIconScript"></script>
 <script
 	type="application/json"
 	id="admin-theme-config"
