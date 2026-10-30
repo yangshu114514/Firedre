@@ -159,11 +159,29 @@ const siteSubtitle = (settings?.subtitle ?? siteConfig.subtitle) || "";
 const siteIdentity = siteSubtitle
 	? `${effectiveTitle} - ${siteSubtitle}`
 	: effectiveTitle;
-if (title) {
-	pageTitle = `${title} - ${siteIdentity}`;
-} else {
-	pageTitle = siteIdentity;
-}
+/**
+ * <title> 长度收敛（不硬编码任何文案，只按字符预算裁剪）：
+ * 搜索结果一般只展示约 60 字符，超长会被截断且丢失站点信息。
+ * 预算内的优先级：页面标题 > 站点名 > 站点副标题，逐级舍弃。
+ */
+const TITLE_MAX = 60;
+const clampTitle = (page?: string): string => {
+	const full = page ? `${page} - ${siteIdentity}` : siteIdentity;
+	if (full.length <= TITLE_MAX) return full;
+	// 1) 舍弃副标题，保留「页面标题 - 站点名」
+	if (siteSubtitle && page) {
+		const noSub = `${page} - ${effectiveTitle}`;
+		if (noSub.length <= TITLE_MAX) return noSub;
+	}
+	// 2) 页面标题本身就超预算：截断主体，末尾保留省略号
+	if (page) {
+		const room = TITLE_MAX - " - ".length - effectiveTitle.length;
+		if (room > 8) return `${page.slice(0, room - 1).trimEnd()}… - ${effectiveTitle}`;
+		return page.length <= TITLE_MAX ? page : `${page.slice(0, TITLE_MAX - 1).trimEnd()}…`;
+	}
+	return siteIdentity;
+};
+pageTitle = clampTitle(title);
 
 let ogImageUrl: string | undefined;
 if ((settings?.post ?? siteConfig.post).generateOgImages && postSlug) {
