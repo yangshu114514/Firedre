@@ -95,25 +95,33 @@ onMount(() => {
 				renderFailed = true;
 				return;
 			}
-			widgetId = w.turnstile.render(container, {
-				sitekey: siteKey,
-				action,
-				theme,
-				// 防泄漏：失败/过期不自动重试。此前 auto_timeout 会无限循环新建
-				// challenge iframe 并重复请求，挂机时内存只涨不落。
-				retry: "never",
-				"refresh-expired": "never",
-				callback: (t: string) => {
-					token = t;
-				},
-				"expired-callback": () => {
-					token = "";
-				},
-				"error-callback": () => {
-					token = "";
-				},
-			});
-			lastWidgetId = widgetId;
+			// swup 软导航会重挂载本组件：上一个 widget 实例若未销毁，
+			// 同页再次 render 会抛异常（且发生在 Promise 链里无人接 → 空白无报错）
+			try {
+				if (lastWidgetId !== null) w.turnstile.remove(lastWidgetId);
+			} catch {
+				/* 旧实例可能已随 DOM 移除，忽略 */
+			}
+			try {
+				widgetId = w.turnstile.render(container, {
+					sitekey: siteKey,
+					action,
+					theme,
+					// 防泄漏：失败/过期不自动重试。此前 auto_timeout 会无限循环新建
+					// challenge iframe 并重复请求，挂机时内存只涨不落。
+					retry: "never",
+					"refresh-expired": "never",
+					callback: (t: string) => {
+						token = t;
+					},
+					"expired-callback": () => {
+						token = "";
+					},
+					"error-callback": () => {
+						token = "";
+					},
+				});
+				lastWidgetId = widgetId;
 			} catch (e) {
 				renderFailed = true;
 				failed = true;
