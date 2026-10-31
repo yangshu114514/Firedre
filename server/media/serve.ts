@@ -92,7 +92,23 @@ export async function serveMedia(
 
 	const ticket = ticketFromCookie(request.headers.get("Cookie"));
 	if (!(await verifyMediaTicket(secret, ticket))) {
-		return new Response("Forbidden", { status: 403 });
+		// 无票 → 302 引导（设计见 ticket.ts 头注释；此前只返回 403，导致首次
+		// 访客的 <audio>/<img> 全部 403 且无人调用取票端点，播放器直接判死）。
+		// 取票端点会 Set-Cookie（同族域 .yangshu.cc.cd）后 302 回本 URL；
+		// 回跳时带 mtr=1 标记，若仍无票则直接 403，防止无限重定向。
+		const url = new URL(request.url);
+		if (url.searchParams.has("mtr")) {
+			return new Response("Forbidden", { status: 403 });
+		}
+		const ticketUrl = new URL("/api/media/ticket/", url.origin);
+		ticketUrl.searchParams.set("r", url.pathname);
+		return new Response(null, {
+			status: 302,
+			headers: {
+				Location: ticketUrl.toString(),
+				"Cache-Control": "no-store",
+			},
+		});
 	}
 
 	let rel: string;
