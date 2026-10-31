@@ -10,4 +10,4 @@ database_id = "0a45a6b7-ab5e-4192-8c5b-92f055e06b97"
 
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "firedre-blog"
+bucket_name = "firedre-blog-apac"
