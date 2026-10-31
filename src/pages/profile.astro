@@ -11,9 +11,17 @@ import { getAuthUser } from "@server/auth/userSession";
 const me = await getAuthUser(Astro.request, cfEnv);
 if (!me) return Astro.redirect("/login/?next=/profile/");
 
+// 别名邮箱（0007 user_emails）
+const aliasRows = await cfEnv.DB.prepare(
+	"SELECT email FROM user_emails WHERE user_id = ? ORDER BY created_at",
+)
+	.bind(me.id)
+	.all<{ email: string }>();
+
 const user: ProfileUser = {
 	id: me.id,
 	email: me.email,
+	emails: (aliasRows.results || []).map((r) => r.email),
 	emailVerified: me.email_verified === 1,
 	name: me.name,
 	avatar: me.avatar,
