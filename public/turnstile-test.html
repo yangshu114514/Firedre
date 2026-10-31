@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Turnstile 最小测试页</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<h2>Turnstile 最小测试页（无站点代码）</h2>
+<p>如果这个页面上 Turnstile 能渲染，说明域名/zone 配置差异；如果两个域都不渲染，就是网络/节点问题。</p>
+<div style="min-height:80px;margin:20px 0;border:1px dashed #999" id="ts"></div>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__tsReady" async></script>
+<script>
+window.__tsReady = function(){
+  window.turnstile.render(document.getElementById('ts'), {
+    sitekey: '0x4AAAAAAESOVZOAonmMofXz',
+    callback: function(t){ document.getElementById('out').textContent = 'token 长度: ' + t.length; },
+    'error-callback': function(code){ document.getElementById('out').textContent = '错误码: ' + code; return true; }
+  });
+  document.getElementById('out').textContent = 'render() 已调用';
+};
+</script>
+<p id="out">等待 api.js…</p>
+</body>
+</html>
