@@ -78,10 +78,11 @@ async function siteNameOf(): Promise<string> {
 	return "Firedre";
 }
 
-function publicUser(u: AuthUser) {
+function publicUser(u: AuthUser, extraEmails: string[] = []) {
 	return {
 		id: u.id,
 		email: u.email,
+		emails: [u.email, ...extraEmails],
 		emailVerified: u.email_verified === 1,
 		name: u.name,
 		avatar: u.avatar,
@@ -466,8 +467,20 @@ export const GET: APIRoute = async ({ params, request }) => {
 			const me = await getAuthUser(request, cfEnv);
 			if (!me)
 				return json({ authenticated: false, user: null }, 200, "private");
+			// 别名邮箱一并返回（多邮箱身份，0007 user_emails）
+			const aliasRows = await cfEnv.DB.prepare(
+				"SELECT email FROM user_emails WHERE user_id = ? ORDER BY created_at",
+			)
+				.bind(me.id)
+				.all<{ email: string }>();
 			return json(
-				{ authenticated: true, user: publicUser(me) },
+				{
+					authenticated: true,
+					user: publicUser(
+						me,
+						(aliasRows.results || []).map((r) => r.email),
+					),
+				},
 				200,
 				"private",
 			);

@@ -5,6 +5,7 @@
 export interface ProfileUser {
 	id: string;
 	email: string;
+	emails?: string[];
 	emailVerified: boolean;
 	name: string;
 	avatar: string;
@@ -158,6 +159,9 @@ async function logout() {
 			<div class="min-w-0">
 				<h2 class="text-lg font-bold text-90 truncate">{name}</h2>
 				<p class="text-sm text-50 truncate">{user.email}</p>
+				{#each (user.emails || []).filter((e) => e !== user.email) as aliasEmail (aliasEmail)}
+					<p class="text-xs text-50 truncate">别名：{aliasEmail}</p>
+				{/each}
 				<div class="mt-1.5 flex items-center gap-2 flex-wrap">
 					{#if user.emailVerified}
 						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/30">
