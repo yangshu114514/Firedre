@@ -18,11 +18,16 @@ let { siteKey = "", token = $bindable(""), action = "login", theme = "auto" }: P
 let container: HTMLDivElement | undefined = $state();
 let widgetId = $state<string | number | null>(null);
 let renderFailed = $state(false);
+// 加载失败自动重试：国内到 challenges.cloudflare.com 的连接重置是间歇性的，
+// 单次失败不代表后续也失败（实测时好时坏），故指数退避重试多次。
+const TS_MAX_RETRIES = 5;
+const TS_RETRY_BASE_MS = 2000;
+let retryingCount = $state(0);
 
 const API_SRC =
 	"https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
-function loadTurnstileScript(): Promise<void> {
+function loadTurnstileScriptOnce(): Promise<void> {
 	const w = window as unknown as { turnstile?: unknown };
 	if (w.turnstile) return Promise.resolve();
 	return new Promise((resolve, reject) => {
@@ -40,9 +45,31 @@ function loadTurnstileScript(): Promise<void> {
 		s.src = API_SRC;
 		s.async = true;
 		s.onload = () => resolve();
-		s.onerror = () => reject(new Error("load fail"));
+		s.onerror = () => {
+			// 失败的 script 标签要从 DOM 移除，否则下次重试会命中 existing 直接挂死
+			s.remove();
+			reject(new Error("load fail"));
+		};
 		document.head.appendChild(s);
 	});
+}
+
+async function loadTurnstileScript(): Promise<void> {
+	for (let attempt = 0; attempt <= TS_MAX_RETRIES; attempt++) {
+		if (attempt > 0) {
+			retryingCount = attempt;
+			await new Promise((r) => setTimeout(r, TS_RETRY_BASE_MS * attempt));
+		}
+		try {
+			await loadTurnstileScriptOnce();
+			retryingCount = 0;
+			return;
+		} catch {
+			// 继续重试
+		}
+	}
+	retryingCount = 0;
+	throw new Error("load fail after retries");
 }
 
 onMount(() => {
@@ -114,7 +141,11 @@ export function reset() {
 {#if siteKey}
 	<div class="my-3">
 		<div bind:this={container} class="tw-container"></div>
-		{#if renderFailed}
+		{#if retryingCount > 0}
+			<p class="text-xs text-neutral-500 mt-1">
+				人机验证组件加载中（重试 {retryingCount}/{TS_MAX_RETRIES}）…
+			</p>
+		{:else if renderFailed}
 			<p class="text-xs text-red-500 mt-1">
 				人机验证组件加载失败，请检查网络后刷新页面
 			</p>
