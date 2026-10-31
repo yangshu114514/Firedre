@@ -27,6 +27,30 @@ export function isValidEmail(email: string): boolean {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/**
+ * 邮箱 → user_id 解析（含别名）：先查 users.email（主邮箱），再查 user_emails.email（别名）。
+ * 登录、注册查重、OAuth 绑定等「按邮箱找用户」统一走这里，保证别名与主邮箱指向同一用户。
+ */
+export async function resolveUserEmail(
+	db: D1Database,
+	rawEmail: string,
+): Promise<string | null> {
+	const email = normalizeEmail(rawEmail);
+	if (!email) return null;
+
+	const main = await db
+		.prepare("SELECT id FROM users WHERE email = ?")
+		.bind(email)
+		.first<{ id: string }>();
+	if (main) return main.id;
+
+	const alias = await db
+		.prepare("SELECT user_id FROM user_emails WHERE email = ?")
+		.bind(email)
+		.first<{ user_id: string }>();
+	return alias?.user_id ?? null;
+}
+
 /** 返回 null 表示通过，否则为用户可读错误文案 */
 export function validatePassword(pw: string): string | null {
 	if (!pw) return "密码不能为空";
@@ -199,10 +223,14 @@ export async function registerUser(
 	const pwErr = validatePassword(input.password);
 	if (pwErr) return { kind: "invalid", message: pwErr };
 
-	const existing = await db
-		.prepare("SELECT id, email_verified FROM users WHERE email = ?")
-		.bind(email)
-		.first<UserRow>();
+	// 查重含别名：别名邮箱已指向某用户时同样视作已注册（防枚举语义不变）
+	const resolvedId = await resolveUserEmail(db, email);
+	const existing = resolvedId
+		? await db
+				.prepare("SELECT id, email_verified FROM users WHERE id = ?")
+				.bind(resolvedId)
+				.first<UserRow>()
+		: null;
 
 	if (existing) {
 		// 防枚举：对调用方返回 duplicate，由 API 层渲染与 created 完全相同的响应；
@@ -366,10 +394,14 @@ export async function resendVerification(
 	if (!isValidEmail(email)) return;
 
 	try {
-		const user = await db
-			.prepare("SELECT id, email_verified FROM users WHERE email = ?")
-			.bind(email)
-			.first<UserRow>();
+		// 别名邮箱同样可触发重发（验证信发往调用方输入的邮箱本身）
+		const resolvedId = await resolveUserEmail(db, email);
+		const user = resolvedId
+			? await db
+					.prepare("SELECT id, email_verified FROM users WHERE id = ?")
+					.bind(resolvedId)
+					.first<UserRow>()
+			: null;
 		if (!user || user.email_verified === 1) return;
 
 		await issueSignupVerification(

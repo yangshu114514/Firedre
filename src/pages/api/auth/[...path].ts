@@ -19,6 +19,7 @@ import {
 	resendVerification,
 	verifyTurnstile,
 	validatePassword,
+	resolveUserEmail,
 	type RegisterEnv,
 } from "@server/auth/register";
 import {
@@ -221,12 +222,16 @@ export const POST: APIRoute = async ({ params, request }) => {
 					if (!email || !password)
 						return json({ message: "邮箱与密码不能为空" }, 400);
 
-					const user = await cfEnv.DB.prepare(
-						`SELECT id, email, email_verified, name, avatar, bio, role, banned, created_at, password
-             FROM users WHERE email = ?`,
-					)
-						.bind(email)
-						.first<AuthUser & { password: string }>();
+					// 先经别名解析（主邮箱或 user_emails 别名 → user_id），再按 id 取用户
+					const resolvedId = await resolveUserEmail(cfEnv.DB, email);
+					const user = resolvedId
+						? await cfEnv.DB.prepare(
+								`SELECT id, email, email_verified, name, avatar, bio, role, banned, created_at, password
+             FROM users WHERE id = ?`,
+							)
+								.bind(resolvedId)
+								.first<AuthUser & { password: string }>()
+						: null;
 
 					// 统一失败文案（不区分邮箱不存在/密码错误）
 					if (!user) return json({ message: "邮箱或密码错误" }, 401);

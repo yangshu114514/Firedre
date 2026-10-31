@@ -9,7 +9,7 @@
 import type { CloudflareEnv } from "../../types/env";
 import { constantTimeEqual } from "../utils/timingSafe";
 import { loadAdminEnv } from "./loadAdminEnv";
-import { normalizeEmail } from "./register";
+import { normalizeEmail, resolveUserEmail } from "./register";
 import {
 	buildUserSessionCookie,
 	createSessionToken,
@@ -437,13 +437,14 @@ async function settleUser(
 		return { userId: bound.user_id, role: bound.role, boundExisting: false };
 	}
 
-	// 分支 2：邮箱已有本地账号 → 绑定后登录
-	const existing = await db
-		.prepare(
-			"SELECT id, role, banned FROM users WHERE email = ?",
-		)
-		.bind(profile.email)
-		.first<{ id: string; role: string; banned: number }>();
+	// 分支 2：邮箱已有本地账号（主邮箱或别名，经 resolveUserEmail 解析）→ 绑定后登录
+	const existingId = await resolveUserEmail(db, profile.email);
+	const existing = existingId
+		? await db
+				.prepare("SELECT id, role, banned FROM users WHERE id = ?")
+				.bind(existingId)
+				.first<{ id: string; role: string; banned: number }>()
+		: null;
 	if (existing) {
 		if (existing.banned === 1)
 			throw new OAuthUpstreamError("banned", "该账号已被封禁");
@@ -465,10 +466,13 @@ async function settleUser(
 	} catch (e) {
 		// 唯一索引并发冲突（同邮箱同时注册/回调）：回退到绑定既有账号
 		console.warn("[oauth] INSERT users 冲突，回退绑定分支:", e);
-		const row = await db
-			.prepare("SELECT id, role, banned FROM users WHERE email = ?")
-			.bind(profile.email)
-			.first<{ id: string; role: string; banned: number }>();
+		const rowId = await resolveUserEmail(db, profile.email);
+		const row = rowId
+			? await db
+					.prepare("SELECT id, role, banned FROM users WHERE id = ?")
+					.bind(rowId)
+					.first<{ id: string; role: string; banned: number }>()
+			: null;
 		if (!row) throw new OAuthUpstreamError("server", "创建账号失败");
 		if (row.banned === 1) throw new OAuthUpstreamError("banned", "该账号已被封禁");
 		await bindAccount(db, row.id, provider, profile.providerUserId);
