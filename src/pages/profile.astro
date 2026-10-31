@@ -21,7 +21,7 @@ const aliasRows = await cfEnv.DB.prepare(
 const user: ProfileUser = {
 	id: me.id,
 	email: me.email,
-	emails: (aliasRows.results || []).map((r) => r.email),
+	emails: [me.email, ...(aliasRows.results || []).map((r) => r.email)],
 	emailVerified: me.email_verified === 1,
 	name: me.name,
 	avatar: me.avatar,
