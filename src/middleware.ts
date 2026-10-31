@@ -59,9 +59,13 @@ function applySecurityHeaders(headers: Headers) {
 	// 仅属性式 handler 放行。若要进一步收紧，需把 Astro 模板里的 onclick 全量改为
 	// addEventListener，并接受 Svelte SSR 占位属性仍会被拦。
 	// 'unsafe-eval' 暂留：待确认无第三方依赖后再收。
+	// media-src：音频/视频源。播放器音源有两类——站内 R2 直链（music 子域，
+	// 由 mediaMusicUrl 生成）与 meting 外链音源 CDN（resolveTrackUrl 的第三方
+	// 返回值），故放行 'self' https:。此前缺 media-src，回退 default-src 'self'，
+	// 跨子域 <audio> 全被 CSP 拦（实测 Chrome Log: "Loading media ... violates"）。
 	headers.set(
 		"Content-Security-Policy",
-		`default-src 'self'; script-src 'self' ${SCRIPT_HASH_SOURCES} 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' blob: https://challenges.cloudflare.com; child-src 'self' blob: https://challenges.cloudflare.com; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'`,
+		`default-src 'self'; script-src 'self' ${SCRIPT_HASH_SOURCES} 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; script-src-attr 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https:; font-src 'self' data:; connect-src 'self' https:; frame-src 'self' blob: https://challenges.cloudflare.com; child-src 'self' blob: https://challenges.cloudflare.com; object-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'`,
 	);
 }
 
