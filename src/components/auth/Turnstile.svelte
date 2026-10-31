@@ -20,9 +20,12 @@ let widgetId = $state<string | number | null>(null);
 let renderFailed = $state(false);
 // 加载失败自动重试：国内到 challenges.cloudflare.com 的连接重置是间歇性的，
 // 单次失败不代表后续也失败（实测时好时坏），故指数退避重试多次。
-const TS_MAX_RETRIES = 5;
+const TS_MAX_RETRIES = 8;
 const TS_RETRY_BASE_MS = 2000;
 let retryingCount = $state(0);
+
+/** 最近一次 render 的 widget id（跨 swup 软导航存续，配合 remove 清理） */
+let lastWidgetId: string | number | null = null;
 
 const API_SRC =
 	"https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
@@ -110,6 +113,13 @@ onMount(() => {
 					token = "";
 				},
 			});
+			lastWidgetId = widgetId;
+			} catch (e) {
+				renderFailed = true;
+				failed = true;
+				console.error("[turnstile] render 失败:", e);
+				return;
+			}
 		})
 		.catch(() => {
 			// 脚本加载失败：清空 token，父组件提交会被后端拒绝
@@ -119,6 +129,18 @@ onMount(() => {
 
 	return () => {
 		disposed = true;
+		// 组件卸载（含 swup 换页）时销毁 widget，防止残留实例污染下次 render
+		const w = window as unknown as {
+			turnstile?: { remove: (id?: string | number) => void };
+		};
+		if (widgetId !== null && w.turnstile) {
+			try {
+				w.turnstile.remove(widgetId);
+			} catch {
+				/* 忽略 */
+			}
+			widgetId = null;
+		}
 	};
 });
 
