@@ -38,10 +38,13 @@ export function mediaMusicUrl(origin: string, filename: string): string {
 		import.meta.env.PROD && import.meta.env.MEDIA_MUSIC_HOST
 			? `https://${import.meta.env.MEDIA_MUSIC_HOST}`
 			: origin;
+	// 末尾补斜杠：项目 trailingSlash:"always"，/music/<key> 无尾斜杠会被 Astro
+	// 判为未匹配 → 404（同 covers 的 toMediaUrl）；Astro 匹配 rest 参数时会
+	// 剥掉尾斜杠，R2 key 不受影响。
 	return `${base}/music/${filename
 		.split("/")
 		.map(encodeURIComponent)
-		.join("/")}`;
+		.join("/")}/`;
 }
 
 /** 列桶（嗅探），返回音频文件名列表 */
