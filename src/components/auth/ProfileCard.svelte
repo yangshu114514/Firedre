@@ -158,9 +158,8 @@ async function logout() {
 			{/if}
 			<div class="min-w-0">
 				<h2 class="text-lg font-bold text-90 truncate">{name}</h2>
-				<p class="text-sm text-50 truncate">{user.email}</p>
-				{#each (user.emails || []).filter((e) => e !== user.email) as aliasEmail (aliasEmail)}
-					<p class="text-xs text-50 truncate">别名：{aliasEmail}</p>
+				{#each user.emails || [user.email] as mail (mail)}
+					<p class="text-sm text-50 truncate">{mail}</p>
 				{/each}
 				<div class="mt-1.5 flex items-center gap-2 flex-wrap">
 					{#if user.emailVerified}
